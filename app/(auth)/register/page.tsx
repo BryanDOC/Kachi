@@ -59,7 +59,7 @@ export default function RegisterPage() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       toast.error('Error al crear la cuenta');
     } finally {
       setIsLoading(false);
@@ -81,7 +81,7 @@ export default function RegisterPage() {
         toast.error(error.message);
         setIsGoogleLoading(false);
       }
-    } catch (error) {
+    } catch {
       toast.error('Error al registrarse con Google');
       setIsGoogleLoading(false);
     }

@@ -15,8 +15,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         'bg-amber-500 text-black hover:bg-amber-400 active:bg-amber-600 shadow-lg shadow-amber-500/20',
       secondary: 'bg-zinc-800 text-white hover:bg-zinc-700 active:bg-zinc-900',
-      outline:
-        'border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600',
+      outline: 'border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600',
     };
 
     return (

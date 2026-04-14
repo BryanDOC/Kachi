@@ -1,14 +1,11 @@
 import { ReactNode } from 'react';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+    <div className="flex min-h-screen bg-[#0A0A0A]">
+      <Sidebar />
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">{children}</main>
     </div>
   );
 }

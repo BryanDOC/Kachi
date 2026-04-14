@@ -41,7 +41,7 @@ export default function LoginPage() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       toast.error('Error al iniciar sesión');
     } finally {
       setIsLoading(false);
@@ -63,7 +63,7 @@ export default function LoginPage() {
         toast.error(error.message);
         setIsGoogleLoading(false);
       }
-    } catch (error) {
+    } catch {
       toast.error('Error al iniciar sesión con Google');
       setIsGoogleLoading(false);
     }

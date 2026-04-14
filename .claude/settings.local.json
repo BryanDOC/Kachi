@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev)",
-      "Bash(timeout /t 5)"
+      "Bash(timeout /t 5)",
+      "Bash(npm install:*)",
+      "Bash(timeout 8 cmd:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx prettier:*)",
+      "Bash(ls:*)",
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell:*)",
+      "Bash(curl:*)"
     ]
   }
 }

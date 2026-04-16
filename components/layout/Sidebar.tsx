@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   LogOut,
+  Tag,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/dashboard/trips', label: 'Viajes', icon: Plane },
   { href: '/dashboard/fixed', label: 'Gastos Fijos', icon: CreditCard },
   { href: '/dashboard/reports', label: 'Reportes', icon: BarChart3 },
+  { href: '/dashboard/categories', label: 'Categorías', icon: Tag },
   { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
 ];
 

@@ -11,7 +11,9 @@
       "Bash(xcopy:*)",
       "Bash(robocopy:*)",
       "Bash(powershell:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(gh api *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

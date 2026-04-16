@@ -55,6 +55,7 @@ export default function RegisterPage() {
           console.error('Error creating profile:', profileError);
         }
 
+        await fetch('/api/seed', { method: 'POST' });
         toast.success('Cuenta creada correctamente');
         router.push('/dashboard');
         router.refresh();

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { seedUserData } from '@/lib/utils/seed';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
             id: user.id,
             full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'Usuario',
           });
+          await seedUserData(supabase, user.id);
         }
       }
 

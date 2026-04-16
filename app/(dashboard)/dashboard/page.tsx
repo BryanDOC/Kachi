@@ -1,17 +1,33 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTransactions } from '@/lib/hooks/useTransactions';
+import { useFixedExpenses } from '@/lib/hooks/useFixedExpenses';
 import { getMonthDateRange } from '@/lib/utils/date';
 import { formatCurrency } from '@/lib/utils/currency';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, Plus } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Plus, Clock, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
 
+function daysUntilBilling(billingDay: number): number {
+  const today = new Date().getDate();
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  if (billingDay >= today) return billingDay - today;
+  return daysInMonth - today + billingDay;
+}
+
 export default function DashboardPage() {
   const { start, end } = getMonthDateRange();
   const { transactions, isLoading } = useTransactions({ startDate: start, endDate: end });
+  const { fixedExpenses } = useFixedExpenses();
+
+  const upcomingFixed = useMemo(() => {
+    return fixedExpenses
+      .filter((fe) => fe.is_active && fe.billing_day !== null && daysUntilBilling(fe.billing_day) <= 5)
+      .sort((a, b) => daysUntilBilling(a.billing_day!) - daysUntilBilling(b.billing_day!));
+  }, [fixedExpenses]);
 
   const income = transactions
     .filter((t) => t.type === 'income')
@@ -117,6 +133,57 @@ export default function DashboardPage() {
           </p>
         </motion.div>
       </div>
+
+      {/* Fixed expense reminders */}
+      {upcomingFixed.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-zinc-900 border border-amber-800/40 rounded-xl p-5"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <CalendarDays size={18} className="text-amber-500" />
+            <h2 className="text-base font-semibold text-white">Gastos fijos próximos</h2>
+            <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-medium">
+              {upcomingFixed.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {upcomingFixed.map((fe) => {
+              const days = daysUntilBilling(fe.billing_day!);
+              return (
+                <div
+                  key={fe.id}
+                  className="flex items-center justify-between py-2 border-b border-zinc-800/60 last:border-0"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock
+                      size={14}
+                      className={days === 0 ? 'text-red-400' : days <= 2 ? 'text-amber-400' : 'text-zinc-500'}
+                    />
+                    <span className="text-sm text-zinc-200">{fe.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-zinc-500">
+                      {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`}
+                    </span>
+                    <span className="text-sm font-medium text-white">
+                      {formatCurrency(fe.amount, fe.currencies?.code || 'PEN')}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <Link
+            href="/dashboard/fixed"
+            className="block mt-3 text-xs text-zinc-500 hover:text-amber-500 transition-colors"
+          >
+            Ver todos los gastos fijos →
+          </Link>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

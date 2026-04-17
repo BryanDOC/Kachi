@@ -11,11 +11,17 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-dm-serif)', 'Georgia', 'serif'],
+        display: ['var(--font-syne)', 'system-ui', 'sans-serif'],
       },
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
+        bg: 'var(--bg)',
+        'bg-input': 'var(--bg-input)',
+        accent: 'var(--accent)',
+        text1: 'var(--text1)',
+        text2: 'var(--text2)',
+        text3: 'var(--text3)',
+        border: 'var(--border)',
+        'border-focus': 'var(--border-focus)',
       },
     },
   },

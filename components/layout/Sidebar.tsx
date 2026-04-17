@@ -16,10 +16,13 @@ import {
   X,
   LogOut,
   Tag,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useTheme } from './ThemeProvider';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,19 +30,20 @@ const navItems = [
   { href: '/dashboard/trips', label: 'Viajes', icon: Plane },
   { href: '/dashboard/fixed', label: 'Gastos Fijos', icon: CreditCard },
   { href: '/dashboard/reports', label: 'Reportes', icon: BarChart3 },
-  { href: '/dashboard/categories', label: 'Categorías', icon: Tag },
-  { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
+  { href: '/dashboard/categories', label: 'Categorias', icon: Tag },
+  { href: '/dashboard/settings', label: 'Configuracion', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    toast.success('Sesión cerrada');
+    toast.success('Sesion cerrada');
     router.push('/login');
     router.refresh();
   };
@@ -48,7 +52,7 @@ export function Sidebar() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-bg-input border border-border rounded-lg text-text1"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -69,17 +73,44 @@ export function Sidebar() {
         initial={false}
         animate={{ x: isOpen ? 0 : -280 }}
         className={cn(
-          'fixed lg:sticky top-0 left-0 h-screen w-70 bg-zinc-950 border-r border-zinc-800 z-40',
+          'fixed lg:sticky top-0 left-0 h-screen w-70 bg-bg border-r border-border z-40',
           'lg:translate-x-0 transition-transform duration-300'
         )}
       >
         <div className="flex flex-col h-full p-6">
           <div className="mb-8">
-            <h1 className="text-2xl font-serif font-bold text-amber-500">Gastos</h1>
-            <p className="text-sm text-zinc-500">Gestor personal</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10">
+                <svg width="40" height="40" viewBox="0 0 72 72" fill="none">
+                  <circle cx="36" cy="36" r="36" className="fill-accent/10" />
+                  <rect x="18" y="16" width="6" height="40" rx="3" className="fill-accent" />
+                  <line
+                    x1="24"
+                    y1="36"
+                    x2="46"
+                    y2="18"
+                    className="stroke-accent"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                  <polyline
+                    points="24,52 34,42 42,48 54,33"
+                    className="stroke-accent"
+                    strokeWidth="5.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-display font-bold text-text1">Kachi</h1>
+                <p className="text-xs text-text2">Gestor personal</p>
+              </div>
+            </div>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -90,10 +121,10 @@ export function Sidebar() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                     isActive
-                      ? 'bg-amber-500 text-black font-medium'
-                      : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
+                      ? 'bg-accent/12 text-accent font-medium'
+                      : 'text-text2 hover:bg-bg-input hover:text-text1'
                   )}
                 >
                   <Icon size={20} />
@@ -103,13 +134,22 @@ export function Sidebar() {
             })}
           </nav>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-white transition-all duration-200 mt-auto"
-          >
-            <LogOut size={20} />
-            <span>Cerrar sesión</span>
-          </button>
+          <div className="mt-auto space-y-1">
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-text2 hover:bg-bg-input hover:text-text1 transition-all duration-200 w-full"
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              <span>{theme === 'light' ? 'Modo oscuro' : 'Modo claro'}</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-text2 hover:bg-bg-input hover:text-text1 transition-all duration-200 w-full"
+            >
+              <LogOut size={20} />
+              <span>Cerrar sesion</span>
+            </button>
+          </div>
         </div>
       </motion.aside>
     </>

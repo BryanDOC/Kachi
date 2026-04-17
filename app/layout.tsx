@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, DM_Serif_Display } from 'next/font/google';
+import { DM_Sans, Syne } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { Toaster } from 'sonner';
@@ -10,10 +10,9 @@ const dmSans = DM_Sans({
   display: 'swap',
 });
 
-const dmSerif = DM_Serif_Display({
+const syne = Syne({
   subsets: ['latin'],
-  variable: '--font-dm-serif',
-  weight: '400',
+  variable: '--font-syne',
   display: 'swap',
 });
 
@@ -29,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${dmSans.variable} ${dmSerif.variable} antialiased font-sans`}>
+      <body className={`${dmSans.variable} ${syne.variable} antialiased font-sans`}>
         <ThemeProvider>
           {children}
           <Toaster position="top-right" richColors />

@@ -16,11 +16,20 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { TransactionWithRelations } from '@/types';
 
+function groupByDate(transactions: TransactionWithRelations[]) {
+  const groups: Record<string, TransactionWithRelations[]> = {};
+  for (const tx of transactions) {
+    const key = formatDate(tx.date);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  }
+  return Object.entries(groups);
+}
+
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [dateRange, setDateRange] = useState<'month' | 'custom'>('month');
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithRelations | null>(
     null
   );
@@ -40,6 +49,8 @@ export default function TransactionsPage() {
   const filteredTransactions = transactions.filter((t) =>
     t.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const grouped = groupByDate(filteredTransactions);
 
   const handleDelete = async () => {
     if (!selectedTransaction) return;
@@ -69,11 +80,18 @@ export default function TransactionsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-10 bg-zinc-900 rounded animate-pulse w-1/3" />
-        <div className="space-y-3">
+      <div className="space-y-4">
+        <div className="h-8 bg-bg-input rounded animate-pulse w-1/3" />
+        <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-zinc-900 rounded animate-pulse" />
+            <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0">
+              <div className="w-9 h-9 rounded-xl bg-bg-input animate-pulse flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 bg-bg-input rounded animate-pulse w-1/2" />
+                <div className="h-3 bg-bg-input rounded animate-pulse w-1/4" />
+              </div>
+              <div className="h-3.5 bg-bg-input rounded animate-pulse w-16" />
+            </div>
           ))}
         </div>
       </div>
@@ -81,34 +99,36 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-white mb-2">Transacciones</h1>
-          <p className="text-zinc-400">{filteredTransactions.length} transacciones</p>
+          <h1 className="text-[17px] font-semibold text-text1">Transacciones</h1>
+          <p className="text-[12px] text-text3 mt-0.5">{filteredTransactions.length} movimientos</p>
         </div>
         <Link
           href="/dashboard/transactions/new"
-          className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-black font-medium rounded-lg hover:bg-amber-400 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black text-[13px] font-semibold rounded-full transition-opacity hover:opacity-85 active:scale-[0.97]"
         >
-          <Plus size={20} />
-          Nueva
+          <Plus size={15} strokeWidth={2.5} />
+          Nuevo
         </Link>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-          </div>
+      {/* Filters */}
+      <div className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text3" size={15} />
+          <input
+            type="text"
+            placeholder="Buscar transacción..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-bg-input border border-border rounded-xl text-[13px] text-text1 placeholder:text-text3 focus:outline-none focus:ring-1 focus:ring-accent/40"
+          />
+        </div>
 
+        <div className="grid grid-cols-2 gap-2">
           <Select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as 'all' | 'expense' | 'income')}
@@ -126,85 +146,103 @@ export default function TransactionsPage() {
               </option>
             ))}
           </Select>
-
-          <Select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as 'month' | 'custom')}
-          >
-            <option value="month">Este mes</option>
-            <option value="custom">Personalizado</option>
-          </Select>
         </div>
       </div>
 
+      {/* List */}
       {filteredTransactions.length === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-          <p className="text-zinc-500">No hay transacciones</p>
+        <div className="bg-bg-input/50 border border-border rounded-[20px] py-14 text-center">
+          <p className="text-[13px] text-text3">No hay transacciones</p>
           <Link
             href="/dashboard/transactions/new"
-            className="inline-block mt-4 text-amber-500 hover:text-amber-400 font-medium"
+            className="inline-block mt-3 text-[13px] text-accent font-medium"
           >
             Crear primera transacción
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredTransactions.map((transaction, index) => (
+        <div className="space-y-5">
+          {grouped.map(([dateLabel, txs], groupIndex) => (
             <motion.div
-              key={transaction.id}
-              initial={{ opacity: 0, y: 20 }}
+              key={dateLabel}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors"
+              transition={{ delay: groupIndex * 0.04 }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">{transaction.description}</h3>
-                    {transaction.categories && (
-                      <span
-                        className="text-xs px-2 py-1 rounded"
-                        style={{
-                          backgroundColor: transaction.categories.color + '20',
-                          color: transaction.categories.color || '#fff',
-                        }}
+              <p className="text-[12px] font-medium text-text3 uppercase tracking-wide px-1 mb-2">
+                {dateLabel}
+              </p>
+              <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
+                {txs.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 group"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                      style={{
+                        background:
+                          transaction.type === 'income'
+                            ? 'rgba(61,255,192,0.08)'
+                            : 'rgba(255,107,107,0.08)',
+                      }}
+                    >
+                      {transaction.type === 'income' ? '💰' : '💸'}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-medium text-text1 truncate leading-snug">
+                        {transaction.description}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {transaction.categories && (
+                          <span
+                            className="text-[11px] font-medium"
+                            style={{ color: transaction.categories.color || 'var(--text3)' }}
+                          >
+                            {transaction.categories.name}
+                          </span>
+                        )}
+                        {transaction.subcategories && (
+                          <>
+                            <span className="text-[11px] text-text3/50">·</span>
+                            <span className="text-[11px] text-text3">
+                              {transaction.subcategories.name}
+                            </span>
+                          </>
+                        )}
+                        {transaction.notes && (
+                          <>
+                            <span className="text-[11px] text-text3/50">·</span>
+                            <span className="text-[11px] text-text3 truncate">{transaction.notes}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <p
+                        className={cn(
+                          'text-[14px] font-semibold tabular-nums',
+                          transaction.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
+                        )}
                       >
-                        {transaction.categories.name}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-zinc-500">
-                    <span>{formatDate(transaction.date)}</span>
-                    {transaction.subcategories && (
-                      <span className="text-zinc-600">• {transaction.subcategories.name}</span>
-                    )}
-                    {transaction.notes && (
-                      <span className="text-zinc-600">• {transaction.notes}</span>
-                    )}
-                  </div>
-                </div>
+                        {transaction.type === 'income' ? '+' : '-'}{' '}
+                        {formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
+                      </p>
 
-                <div className="flex items-center gap-4">
-                  <p
-                    className={cn(
-                      'text-2xl font-serif font-bold',
-                      transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
-                    )}
-                  >
-                    {transaction.type === 'income' ? '+' : '-'}
-                    {formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      setSelectedTransaction(transaction);
-                      setShowDeleteModal(true);
-                    }}
-                    className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
+                      <button
+                        onClick={() => {
+                          setSelectedTransaction(transaction);
+                          setShowDeleteModal(true);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-text3 hover:text-[#FF6B6B] hover:bg-red-500/10 rounded-lg transition-all"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           ))}
@@ -218,11 +256,11 @@ export default function TransactionsPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-zinc-300">¿Estás seguro de que quieres eliminar esta transacción?</p>
+          <p className="text-[14px] text-text2">¿Estás seguro de que quieres eliminar esta transacción?</p>
           {selectedTransaction && (
-            <div className="p-4 bg-zinc-950 rounded-lg">
-              <p className="text-white font-medium">{selectedTransaction.description}</p>
-              <p className="text-zinc-500 text-sm mt-1">
+            <div className="p-3.5 bg-bg-input rounded-xl border border-border">
+              <p className="text-[14px] font-medium text-text1">{selectedTransaction.description}</p>
+              <p className="text-[12px] text-text3 mt-0.5">
                 {formatCurrency(
                   selectedTransaction.amount,
                   selectedTransaction.currencies?.code || 'PEN'
@@ -230,7 +268,7 @@ export default function TransactionsPage() {
               </p>
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <Button
               variant="secondary"
               className="flex-1"

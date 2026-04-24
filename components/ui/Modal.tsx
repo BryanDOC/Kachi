@@ -48,15 +48,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                'bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl w-full',
+                'bg-bg border border-border rounded-2xl shadow-2xl w-full',
                 sizes[size]
               )}
             >
-              <div className="flex items-center justify-between p-6 border-b border-zinc-800">
-                <h2 className="text-xl font-semibold text-white">{title}</h2>
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <h2 className="text-xl font-semibold text-text1">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="text-zinc-400 hover:text-white transition-colors"
+                  className="text-text3 hover:text-text1 transition-colors"
                 >
                   <X size={24} />
                 </button>

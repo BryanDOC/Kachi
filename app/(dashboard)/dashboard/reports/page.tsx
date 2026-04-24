@@ -190,16 +190,17 @@ export default function ReportsPage() {
     }
   }, [expenses, trendCategories, start, end]);
 
-  // D. Top subcategories
+  // D. Top tags
   const subcategoryData = useMemo(() => {
     const map: Record<string, { name: string; category: string; total: number }> = {};
     expenses.forEach((t) => {
-      const sub = t.subcategories;
-      if (!sub) return;
-      if (!map[sub.id]) {
-        map[sub.id] = { name: sub.name, category: t.categories?.name || '—', total: 0 };
-      }
-      map[sub.id].total += t.amount;
+      (t.transaction_tags || []).forEach(({ subcategories: sub }) => {
+        if (!sub) return;
+        if (!map[sub.id]) {
+          map[sub.id] = { name: sub.name, category: t.categories?.name || '—', total: 0 };
+        }
+        map[sub.id].total += t.amount;
+      });
     });
     return Object.values(map)
       .sort((a, b) => b.total - a.total)

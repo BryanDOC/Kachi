@@ -13,7 +13,9 @@
       "Bash(powershell:*)",
       "Bash(curl:*)",
       "Bash(gh api *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git stash *)",
+      "Bash(npm run *)"
     ]
   }
 }

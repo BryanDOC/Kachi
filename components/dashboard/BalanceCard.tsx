@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useUI } from '@/lib/context/ui-context';
 
 export interface BalanceCardProps {
   balance: string;
@@ -10,6 +10,7 @@ export interface BalanceCardProps {
 }
 
 export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProps) {
+  const { setSidebarOpen, openTxSheet } = useUI();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -39,9 +40,12 @@ export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProp
       <div className="relative z-10 h-full flex flex-col justify-between">
         {/* Top: Avatar + Chip + Brand */}
         <div className="flex items-center justify-between">
-          <div className="w-[38px] h-[38px] rounded-full bg-white/18 border-2 border-white/22 flex items-center justify-center font-display text-[15px] font-bold text-white">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="w-[38px] h-[38px] rounded-full bg-white/18 border-2 border-white/22 flex items-center justify-center font-display text-[15px] font-bold text-white dark:bg-[#1A1A2E]/10 dark:border-[#1A1A2E]/15 dark:text-[#1A1A2E] transition-opacity hover:opacity-80 active:scale-95"
+          >
             {userName.charAt(0).toUpperCase()}
-          </div>
+          </button>
           <div className="flex items-center gap-2">
             <div
               className="w-[34px] h-[26px] rounded-[5px] relative overflow-hidden"
@@ -52,26 +56,26 @@ export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProp
               <div className="absolute top-1/2 left-0 right-0 h-px bg-black/18 -translate-y-1/2" />
               <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black/18" />
             </div>
-            <span className="font-display text-xl font-extrabold text-white tracking-wide italic">
-              Kachi
+            <span className="font-brand text-2xl text-white dark:text-[#1A1A2E] tracking-wide">
+              KACHI
             </span>
           </div>
         </div>
 
         {/* Middle: Balance */}
         <div>
-          <p className="text-[10px] font-medium tracking-wider uppercase text-white/60 mb-0.5">
+          <p className="text-[10px] font-medium tracking-wider uppercase text-white/60 dark:text-[#1A1A2E]/60 mb-0.5">
             Balance disponible
           </p>
-          <p className="font-display text-2xl font-extrabold text-white tracking-tight">{balance}</p>
-          <p className="text-[11px] text-white/50 mt-1 capitalize">{period}</p>
+          <p className="font-brand text-2xl text-white dark:text-[#1A1A2E] tracking-tight">{balance}</p>
+          <p className="text-[11px] text-white/50 dark:text-[#1A1A2E]/50 mt-1 capitalize">{period}</p>
         </div>
 
         {/* Bottom: Register button */}
         <div className="flex justify-end">
-          <Link
-            href="/dashboard/transactions/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 border border-white/26 text-white text-[13px] font-semibold transition-opacity hover:opacity-80 active:scale-[0.97]"
+          <button
+            onClick={() => openTxSheet()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 border border-white/26 text-white dark:bg-[#1A1A2E]/10 dark:border-[#1A1A2E]/15 dark:text-[#1A1A2E] text-[13px] font-semibold transition-opacity hover:opacity-80 active:scale-[0.97]"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path
@@ -82,7 +86,7 @@ export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProp
               />
             </svg>
             Movimiento
-          </Link>
+          </button>
         </div>
       </div>
     </motion.div>

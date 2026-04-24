@@ -7,7 +7,7 @@ import { RecentTransactionsSection } from '@/components/dashboard/RecentTransact
 // ============ MOCK DATA ============
 const MOCK_BALANCE = 'S/ 1,353';
 const MOCK_PERIOD = 'Abril 2026';
-const MOCK_USER_NAME = 'Kachi';
+const MOCK_USER_NAME = 'KACHI';
 
 const MOCK_UPCOMING_EXPENSES = [
   { id: '1', name: 'Netflix', daysUntil: 0, billingDay: 15, amount: 'S/ 38.90' },

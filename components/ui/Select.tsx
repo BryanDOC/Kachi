@@ -11,7 +11,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="space-y-1.5">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-zinc-300">
+          <label
+            htmlFor={id}
+            className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3"
+          >
             {label}
           </label>
         )}
@@ -19,17 +22,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={cn(
-            'w-full px-4 py-2.5 bg-zinc-900 border rounded-lg text-white',
-            'focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent',
-            'transition-all duration-200',
-            error ? 'border-red-500' : 'border-zinc-700',
+            'w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px]',
+            'text-[15px] text-text1 focus:outline-none focus:border-border-focus transition-colors',
+            error ? 'border-[#FF6B6B]' : '',
             className
           )}
           {...props}
         >
           {children}
         </select>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-[12px] text-[#FF6B6B] mt-1">{error}</p>}
       </div>
     );
   }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,8 +11,6 @@ import {
   CreditCard,
   BarChart3,
   Settings,
-  Menu,
-  X,
   LogOut,
   Tag,
   Moon,
@@ -23,6 +20,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTheme } from './ThemeProvider';
+import { useUI } from '@/lib/context/ui-context';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,7 +35,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
+  const { sidebarOpen: isOpen, setSidebarOpen: setIsOpen } = useUI();
   const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
@@ -50,13 +48,6 @@ export function Sidebar() {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-bg-input border border-border rounded-lg text-text1"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div

@@ -32,7 +32,7 @@ export function RecentTransactionsSection({
       transition={{ duration: 0.5, delay: 0.2 }}
     >
       <div className="flex items-center justify-between px-1 mb-3">
-        <h2 className="font-display text-base font-bold text-text1">{title}</h2>
+        <h2 className="font-heading text-base font-semibold tracking-wide uppercase text-text1">{title}</h2>
         <Link href={viewAllHref} className="text-[13px] font-medium text-accent">
           Ver todo
         </Link>

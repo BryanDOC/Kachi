@@ -48,7 +48,7 @@ export function TransactionRow({
       </div>
       <p
         className={cn(
-          'font-display text-[15px] font-bold flex-shrink-0',
+          'font-numeric text-[15px] font-bold flex-shrink-0',
           type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
         )}
       >

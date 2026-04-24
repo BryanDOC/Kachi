@@ -28,7 +28,7 @@ export function UpcomingExpenseRow({
           {billingDay}
         </p>
       </div>
-      <p className="font-display text-sm font-bold text-text1/85">{amount}</p>
+      <p className="font-numeric text-sm font-bold text-text1/85">{amount}</p>
     </div>
   );
 }

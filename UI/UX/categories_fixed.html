@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categorías & Gastos Fijos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #0E0E16;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 28px;
+  padding: 40px 32px;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: auto;
+}
+
+/* ── PHONE ── */
+.phone {
+  width: 390px; height: 844px;
+  border-radius: 50px; overflow: hidden;
+  position: relative; flex-shrink: 0;
+}
+.dark { background: #0B1F1C; box-shadow: 0 0 0 1px rgba(61,255,192,0.08), 0 32px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(61,255,192,0.05); }
+.light { background: #F2F2F7; box-shadow: 0 0 0 1px rgba(0,0,0,0.07), 0 28px 72px rgba(0,0,0,0.15), inset 0 1px 0 #fff; }
+
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:126px; height:36px; z-index:30; border-radius:0 0 24px 24px; }
+.dark .notch { background:#000; }
+.light .notch { background:#1A1A2E; }
+
+.status { position:relative; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:14px 26px 0; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; }
+.dark .status { color:#F0F5F3; }
+.light .status { color:#1A1A2E; }
+.st-r { display:flex; align-items:center; gap:6px; }
+
+.scroll { height:calc(100% - 48px); overflow-y:auto; padding-bottom:100px; }
+.scroll::-webkit-scrollbar { display:none; }
+.scroll-full { height:100%; overflow-y:auto; padding-bottom:20px; }
+.scroll-full::-webkit-scrollbar { display:none; }
+
+/* ── TOP BAR ── */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; }
+.topbar-title { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; letter-spacing:-0.3px; }
+.dark .topbar-title { color:#F0F5F3; }
+.light .topbar-title { color:#1A1A2E; }
+.topbar-sub { font-size:13px; margin-top:2px; }
+.dark .topbar-sub { color:rgba(240,245,243,0.45); }
+.light .topbar-sub { color:rgba(26,26,46,0.45); }
+
+.back-btn { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; cursor:pointer; }
+.dark .back-btn { color:#3DFFC0; }
+.light .back-btn { color:#1A1A2E; }
+
+.add-btn {
+  height:36px; padding:0 16px; border-radius:12px;
+  display:flex; align-items:center; gap:6px;
+  font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+  border:none; cursor:pointer;
+}
+.dark .add-btn { background:#3DFFC0; color:#0B1F1C; }
+.light .add-btn { background:#1A1A2E; color:#fff; }
+
+/* ── SEARCH ── */
+.search-bar {
+  display:flex; align-items:center; gap:10px;
+  margin:0 20px 16px; padding:0 14px; height:44px;
+  border-radius:14px;
+}
+.dark .search-bar { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+.light .search-bar { background:#fff; box-shadow:0 1px 6px rgba(0,0,0,0.06); }
+.search-bar input {
+  flex:1; background:none; border:none; outline:none;
+  font-family:'DM Sans',sans-serif; font-size:14px;
+}
+.dark .search-bar input { color:#F0F5F3; }
+.dark .search-bar input::placeholder { color:rgba(240,245,243,0.3); }
+.light .search-bar input { color:#1A1A2E; }
+.light .search-bar input::placeholder { color:rgba(26,26,46,0.3); }
+
+/* ── CATEGORY ACCORDION ── */
+.cat-group { margin:0 20px 8px; border-radius:20px; overflow:hidden; }
+.dark .cat-group { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); }
+.light .cat-group { background:#fff; box-shadow:0 1px 8px rgba(0,0,0,0.06); }
+
+.cat-group-header {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; cursor:pointer;
+}
+.cat-group-icon {
+  width:40px; height:40px; border-radius:13px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.cat-group-info { flex:1; }
+.cat-group-name { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; }
+.dark .cat-group-name { color:#F0F5F3; }
+.light .cat-group-name { color:#1A1A2E; }
+.cat-group-meta { font-size:12px; margin-top:2px; display:flex; align-items:center; gap:6px; }
+.dark .cat-group-meta { color:rgba(240,245,243,0.4); }
+.light .cat-group-meta { color:rgba(26,26,46,0.4); }
+.budget-tag { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; }
+.dark .budget-tag { background:rgba(61,255,192,0.12); color:#3DFFC0; }
+.light .budget-tag { background:rgba(26,26,46,0.08); color:rgba(26,26,46,0.6); }
+
+.cat-group-actions { display:flex; gap:8px; }
+.cat-action {
+  width:30px; height:30px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:none;
+}
+.dark .cat-action.edit { background:rgba(61,255,192,0.1); }
+.dark .cat-action.del { background:rgba(255,107,107,0.1); }
+.light .cat-action.edit { background:rgba(26,26,46,0.07); }
+.light .cat-action.del { background:rgba(192,57,43,0.07); }
+
+.chevron { transition:transform 0.2s; }
+.chevron.open { transform:rotate(180deg); }
+
+/* Subcategories expanded */
+.cat-subcats { border-top:1px solid; padding:8px 0; }
+.dark .cat-subcats { border-color:rgba(255,255,255,0.06); }
+.light .cat-subcats { border-color:rgba(26,26,46,0.06); }
+
+.subcat-row { display:flex; align-items:center; gap:10px; padding:8px 16px 8px 56px; }
+.subcat-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.subcat-name { flex:1; font-size:13px; }
+.dark .subcat-name { color:rgba(240,245,243,0.65); }
+.light .subcat-name { color:rgba(26,26,46,0.65); }
+.subcat-actions { display:flex; gap:6px; }
+.subcat-btn { background:none; border:none; cursor:pointer; padding:2px; }
+
+.add-subcat {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 16px 8px 56px; cursor:pointer;
+  font-size:13px; font-weight:500;
+}
+.dark .add-subcat { color:#3DFFC0; }
+.light .add-subcat { color:rgba(26,26,46,0.5); }
+
+/* ── FIXED EXPENSE CARD ── */
+.fixed-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px 20px; }
+.fixed-card { border-radius:18px; padding:16px; position:relative; }
+.dark .fixed-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); }
+.light .fixed-card { background:#fff; box-shadow:0 1px 8px rgba(0,0,0,0.06); }
+
+.fixed-card-name { font-size:13px; font-weight:500; margin-bottom:8px; }
+.dark .fixed-card-name { color:rgba(240,245,243,0.7); }
+.light .fixed-card-name { color:rgba(26,26,46,0.6); }
+.fixed-card-amount { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-0.3px; margin-bottom:4px; }
+.dark .fixed-card-amount { color:#F0F5F3; }
+.light .fixed-card-amount { color:#1A1A2E; }
+.fixed-card-day { font-size:11px; margin-bottom:10px; display:flex; align-items:center; gap:4px; }
+.dark .fixed-card-day { color:rgba(240,245,243,0.35); }
+.light .fixed-card-day { color:rgba(26,26,46,0.35); }
+.fixed-card-footer { display:flex; align-items:center; justify-content:space-between; }
+.fixed-cat-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
+
+/* Toggle */
+.toggle { width:36px; height:22px; border-radius:11px; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+.toggle.on { background:#3DFFC0; }
+.toggle.off { background:rgba(255,255,255,0.15); }
+.light .toggle.off { background:rgba(26,26,46,0.15); }
+.toggle-thumb { width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:2px; transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on .toggle-thumb { left:16px; }
+.toggle.off .toggle-thumb { left:2px; }
+
+/* Fixed card inactive */
+.fixed-card.inactive { opacity:0.55; }
+
+/* ── SUMMARY BANNER ── */
+.fixed-banner {
+  margin:0 20px 20px; border-radius:18px; padding:18px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.dark .fixed-banner { background:rgba(61,255,192,0.08); border:1px solid rgba(61,255,192,0.15); }
+.light .fixed-banner { background:rgba(26,26,46,0.05); border:1px solid rgba(26,26,46,0.08); }
+.fixed-banner-label { font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.dark .fixed-banner-label { color:rgba(61,255,192,0.7); }
+.light .fixed-banner-label { color:rgba(26,26,46,0.45); }
+.fixed-banner-amount { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; }
+.dark .fixed-banner-amount { color:#3DFFC0; }
+.light .fixed-banner-amount { color:#1A1A2E; }
+.fixed-banner-count { font-size:12px; margin-top:2px; }
+.dark .fixed-banner-count { color:rgba(61,255,192,0.5); }
+.light .fixed-banner-count { color:rgba(26,26,46,0.4); }
+
+/* ── SECTION LABEL ── */
+.sec-lbl { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; padding:0 22px 10px; letter-spacing:0.3px; }
+.dark .sec-lbl { color:rgba(240,245,243,0.4); }
+.light .sec-lbl { color:rgba(26,26,46,0.35); }
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay {
+  position:absolute; inset:0; z-index:50;
+  display:flex; flex-direction:column; justify-content:flex-end;
+}
+.dark .modal-overlay { background:rgba(0,0,0,0.6); }
+.light .modal-overlay { background:rgba(0,0,0,0.35); }
+
+.modal-sheet {
+  border-radius:28px 28px 0 0; padding:24px 22px 36px;
+}
+.dark .modal-sheet { background:#112620; border:1px solid rgba(61,255,192,0.1); border-bottom:none; }
+.light .modal-sheet { background:#fff; box-shadow:0 -4px 30px rgba(0,0,0,0.1); }
+
+.modal-handle { width:40px; height:4px; border-radius:2px; margin:0 auto 20px; }
+.dark .modal-handle { background:rgba(255,255,255,0.15); }
+.light .modal-handle { background:rgba(26,26,46,0.12); }
+
+.modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:20px; }
+.dark .modal-title { color:#F0F5F3; }
+.light .modal-title { color:#1A1A2E; }
+
+/* FORM */
+.form-group { margin-bottom:14px; }
+.form-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; }
+.dark .form-label { color:rgba(240,245,243,0.4); }
+.light .form-label { color:rgba(26,26,46,0.4); }
+.form-input {
+  width:100%; height:48px; border-radius:14px;
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  padding:0 14px; outline:none; border:1.5px solid transparent;
+  transition:border-color 0.15s;
+}
+.dark .form-input { background:rgba(255,255,255,0.06); color:#F0F5F3; border-color:rgba(255,255,255,0.08); }
+.dark .form-input:focus { border-color:rgba(61,255,192,0.4); }
+.dark .form-input::placeholder { color:rgba(240,245,243,0.25); }
+.light .form-input { background:#F2F2F7; color:#1A1A2E; border-color:transparent; }
+.light .form-input:focus { border-color:rgba(26,26,46,0.2); background:#fff; }
+.light .form-input::placeholder { color:rgba(26,26,46,0.28); }
+
+/* Color picker */
+.color-row { display:flex; gap:8px; flex-wrap:wrap; }
+.color-dot {
+  width:32px; height:32px; border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform 0.12s;
+}
+.color-dot.selected::after { content:'✓'; font-size:14px; font-weight:700; color:#fff; }
+.color-dot:hover { transform:scale(1.1); }
+
+/* Icon grid */
+.icon-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+.icon-cell {
+  height:42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; cursor:pointer; transition:all 0.12s;
+}
+.dark .icon-cell { background:rgba(255,255,255,0.05); }
+.light .icon-cell { background:rgba(26,26,46,0.05); }
+.dark .icon-cell.selected { background:rgba(61,255,192,0.2); }
+.light .icon-cell.selected { background:#1A1A2E; }
+
+/* Preview badge */
+.cat-preview {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:14px; margin-bottom:16px;
+}
+.dark .cat-preview { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+.light .cat-preview { background:#F2F2F7; }
+.cat-preview-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.cat-preview-name { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+.dark .cat-preview-name { color:#F0F5F3; }
+.light .cat-preview-name { color:#1A1A2E; }
+
+/* Modal actions */
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.btn-cancel { flex:1; height:48px; border-radius:14px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; }
+.dark .btn-cancel { background:rgba(255,255,255,0.07); color:rgba(240,245,243,0.7); }
+.light .btn-cancel { background:rgba(26,26,46,0.07); color:rgba(26,26,46,0.6); }
+.btn-save { flex:2; height:48px; border-radius:14px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; }
+.dark .btn-save { background:#3DFFC0; color:#0B1F1C; }
+.light .btn-save { background:#1A1A2E; color:#fff; }
+
+/* Delete modal */
+.modal-delete { text-align:center; }
+.modal-delete-icon { width:56px; height:56px; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 16px; }
+.dark .modal-delete-icon { background:rgba(255,107,107,0.12); }
+.light .modal-delete-icon { background:rgba(192,57,43,0.08); }
+.modal-delete-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:8px; }
+.dark .modal-delete-title { color:#F0F5F3; }
+.light .modal-delete-title { color:#1A1A2E; }
+.modal-delete-body { font-size:14px; line-height:1.5; margin-bottom:24px; }
+.dark .modal-delete-body { color:rgba(240,245,243,0.5); }
+.light .modal-delete-body { color:rgba(26,26,46,0.5); }
+.btn-delete { flex:2; height:48px; border-radius:14px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; background:#FF4444; color:#fff; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { position:absolute; bottom:0; left:0; right:0; height:83px; z-index:20; display:flex; align-items:flex-start; justify-content:space-around; padding:12px 8px 0; border-top:0.5px solid; }
+.dark .bottom-nav { background:#0B1F1C; border-color:rgba(255,255,255,0.07); }
+.light .bottom-nav { background:#F2F2F7; border-color:rgba(26,26,46,0.08); }
+.nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; cursor:pointer; }
+.nav-lbl { font-size:10px; font-weight:500; }
+.dark .nav-item.active .nav-lbl { color:#3DFFC0; }
+.dark .nav-item .nav-lbl { color:rgba(240,245,243,0.3); }
+.light .nav-item.active .nav-lbl { color:#1A1A2E; }
+.light .nav-item .nav-lbl { color:rgba(26,26,46,0.3); }
+.nav-fab { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:-22px; flex-shrink:0; }
+.dark .nav-fab { background:#3DFFC0; box-shadow:0 4px 20px rgba(61,255,192,0.35); }
+.light .nav-fab { background:#1A1A2E; box-shadow:0 4px 20px rgba(26,26,46,0.3); }
+
+/* COL LABEL */
+.col-label { text-align:center; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.5px; margin-top:14px; }
+
+/* ══ STATUS BAR ICONS ══ */
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+  1. CATEGORÍAS — LISTA DARK
+════════════════════════════ -->
+<div>
+<div class="phone dark">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r">
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="white" opacity="0.3"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="white" opacity="0.55"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" fill="white"/><path d="M4.5 7.5C5.6 6.4 6.7 5.8 8 5.8s2.4.6 3.5 1.7" stroke="white" stroke-width="1.2" stroke-linecap="round"/><path d="M2 5C3.8 3.2 5.8 2.3 8 2.3s4.2.9 6 2.7" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" opacity="0.3"/><rect x="2" y="2" width="16" height="8" rx="2" fill="white"/><path d="M23 4v4a2 2 0 0 0 0-4Z" fill="white" opacity="0.4"/></svg>
+  </div></div>
+
+  <div class="scroll">
+    <div class="topbar">
+      <div><div class="topbar-title">Categorías</div><div class="topbar-sub">8 categorías configuradas</div></div>
+      <button class="add-btn"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#0B1F1C" stroke-width="1.8" stroke-linecap="round"/></svg> Nueva</button>
+    </div>
+
+    <div class="search-bar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="rgba(240,245,243,0.35)" stroke-width="1.4"/><path d="M11 11l3 3" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input placeholder="Buscar categoría...">
+    </div>
+
+    <!-- Salidas -->
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(255,107,107,0.12);">🍽️</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Salidas</div>
+          <div class="cat-group-meta">4 subcategorías <span class="budget-tag">S/ 1,000 límite</span></div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="#3DFFC0" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#FF6B6B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron open" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="cat-subcats">
+        <div class="subcat-row"><div class="subcat-dot" style="background:#FF6B6B;"></div><span class="subcat-name">Restaurantes</span><div class="subcat-actions"><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 9l1.5-1.5 4.5-4.5 1.5 1.5-4.5 4.5L3.5 10.5 2 9Z" stroke="rgba(240,245,243,0.3)" stroke-width="1.1"/></svg></button><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M4 3V2h5v1M3.5 3v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="rgba(255,107,107,0.5)" stroke-width="1.1" stroke-linecap="round"/></svg></button></div></div>
+        <div class="subcat-row"><div class="subcat-dot" style="background:#FF6B6B;"></div><span class="subcat-name">Cafeterías</span><div class="subcat-actions"><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 9l1.5-1.5 4.5-4.5 1.5 1.5-4.5 4.5L3.5 10.5 2 9Z" stroke="rgba(240,245,243,0.3)" stroke-width="1.1"/></svg></button><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M4 3V2h5v1M3.5 3v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="rgba(255,107,107,0.5)" stroke-width="1.1" stroke-linecap="round"/></svg></button></div></div>
+        <div class="subcat-row"><div class="subcat-dot" style="background:#FF6B6B;"></div><span class="subcat-name">Delivery</span><div class="subcat-actions"><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 9l1.5-1.5 4.5-4.5 1.5 1.5-4.5 4.5L3.5 10.5 2 9Z" stroke="rgba(240,245,243,0.3)" stroke-width="1.1"/></svg></button><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M4 3V2h5v1M3.5 3v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="rgba(255,107,107,0.5)" stroke-width="1.1" stroke-linecap="round"/></svg></button></div></div>
+        <div class="add-subcat">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="#3DFFC0" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Agregar subcategoría
+        </div>
+      </div>
+    </div>
+
+    <!-- Transporte -->
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(96,165,250,0.12);">🚌</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Transporte</div>
+          <div class="cat-group-meta">3 subcategorías</div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="#3DFFC0" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#FF6B6B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- Alimentación -->
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(61,255,192,0.1);">🛒</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Alimentación</div>
+          <div class="cat-group-meta">2 subcategorías <span class="budget-tag">S/ 600 límite</span></div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="#3DFFC0" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#FF6B6B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- Salud -->
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(167,139,250,0.1);">💊</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Salud</div>
+          <div class="cat-group-meta">2 subcategorías <span class="budget-tag">S/ 500 límite</span></div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="#3DFFC0" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#FF6B6B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- Trabajo -->
+    <div class="cat-group">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(252,211,77,0.1);">💼</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Trabajo</div>
+          <div class="cat-group-meta">1 subcategoría</div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="#3DFFC0" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#FF6B6B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(240,245,243,0.35)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)"/><rect x="13" y="3" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/></svg><span class="nav-lbl">Inicio</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="rgba(240,245,243,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Movimientos</span></div>
+    <div class="nav-fab"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="#0B1F1C" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <div class="nav-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="#3DFFC0" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="17" r="4" fill="#3DFFC0"/><path d="M15.5 17h3M17 15.5v3" stroke="#0B1F1C" stroke-width="1.4" stroke-linecap="round"/></svg><span class="nav-lbl" style="color:#3DFFC0;">Categorías</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="rgba(240,245,243,0.25)" stroke-width="1.6"/><path d="M5 20s0-5 7-5 7 5 7 5" stroke="rgba(240,245,243,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Perfil</span></div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(240,245,243,0.2);">Categorías · Lista · Dark</div>
+</div>
+
+<!-- ════════════════════════════
+  2. CREAR CATEGORÍA DARK (modal)
+════════════════════════════ -->
+<div>
+<div class="phone dark">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="white" opacity="0.3"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="white" opacity="0.55"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" opacity="0.3"/><rect x="2" y="2" width="16" height="8" rx="2" fill="white"/></svg></div></div>
+
+  <!-- bg dimmed content -->
+  <div style="height:calc(100% - 48px); display:flex; flex-direction:column; justify-content:flex-end;">
+    <div style="flex:1; padding:20px; opacity:0.25;">
+      <div style="height:60px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:60px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:60px; background:rgba(255,255,255,0.05); border-radius:16px;"></div>
+    </div>
+
+    <!-- MODAL SHEET -->
+    <div style="background:#112620; border-radius:28px 28px 0 0; padding:20px 22px 36px; border:1px solid rgba(61,255,192,0.1); border-bottom:none;">
+      <div style="width:40px; height:4px; border-radius:2px; background:rgba(255,255,255,0.15); margin:0 auto 20px;"></div>
+      <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#F0F5F3; margin-bottom:16px;">Nueva categoría</div>
+
+      <!-- Preview -->
+      <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); margin-bottom:16px;">
+        <div style="width:32px; height:32px; border-radius:10px; background:rgba(255,107,107,0.15); display:flex; align-items:center; justify-content:center; font-size:16px;">🛍️</div>
+        <span style="font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#F0F5F3;">Compras</span>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Nombre</div>
+        <input class="form-input" value="Compras" style="background:rgba(255,255,255,0.06);border-color:rgba(61,255,192,0.4);color:#F0F5F3;">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Color</div>
+        <div class="color-row">
+          <div class="color-dot selected" style="background:#FF6B6B;"></div>
+          <div class="color-dot" style="background:#3DFFC0;"></div>
+          <div class="color-dot" style="background:#60A5FA;"></div>
+          <div class="color-dot" style="background:#FCD34D;"></div>
+          <div class="color-dot" style="background:#A78BFA;"></div>
+          <div class="color-dot" style="background:#F472B6;"></div>
+          <div class="color-dot" style="background:#FB923C;"></div>
+          <div class="color-dot" style="background:#34D399;"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Ícono</div>
+        <div class="icon-grid">
+          <div class="icon-cell">🛒</div><div class="icon-cell selected">🛍️</div><div class="icon-cell">🚌</div>
+          <div class="icon-cell">🍽️</div><div class="icon-cell">💊</div><div class="icon-cell">💼</div>
+          <div class="icon-cell">✈️</div><div class="icon-cell">🏠</div><div class="icon-cell">🎮</div>
+          <div class="icon-cell">📱</div><div class="icon-cell">🎵</div><div class="icon-cell">🏋️</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <div class="form-label">Límite de presupuesto mensual (opcional)</div>
+        <input class="form-input" placeholder="S/ 0.00" style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" style="background:rgba(255,255,255,0.07);color:rgba(240,245,243,0.7);">Cancelar</button>
+        <button class="btn-save" style="background:#3DFFC0;color:#0B1F1C;">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(240,245,243,0.2);">Nueva categoría · Dark</div>
+</div>
+
+<!-- ════════════════════════════
+  3. ELIMINAR CATEGORÍA DARK
+════════════════════════════ -->
+<div>
+<div class="phone dark">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="white" opacity="0.3"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="white" opacity="0.55"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+
+  <div style="height:calc(100% - 48px); display:flex; flex-direction:column; justify-content:flex-end;">
+    <div style="flex:1; padding:20px; opacity:0.2;">
+      <div style="height:80px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:60px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:60px; background:rgba(255,255,255,0.05); border-radius:16px;"></div>
+    </div>
+
+    <div style="background:#112620; border-radius:28px 28px 0 0; padding:20px 22px 36px; border:1px solid rgba(255,107,107,0.12); border-bottom:none; text-align:center;">
+      <div style="width:40px; height:4px; border-radius:2px; background:rgba(255,255,255,0.15); margin:0 auto 24px;"></div>
+      <div style="width:60px; height:60px; border-radius:20px; background:rgba(255,70,70,0.12); display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px;">🗑️</div>
+      <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#F0F5F3; margin-bottom:10px;">Eliminar categoría</div>
+      <div style="font-size:14px; color:rgba(240,245,243,0.5); line-height:1.6; margin-bottom:8px;">¿Estás seguro de eliminar <strong style="color:#F0F5F3;">Salidas</strong>?</div>
+      <div style="font-size:13px; color:rgba(255,107,107,0.7); margin-bottom:24px; background:rgba(255,107,107,0.08); padding:10px 14px; border-radius:12px;">Esta categoría tiene <strong>24 transacciones</strong> asociadas. No se puede eliminar.</div>
+
+      <div style="display:flex; gap:10px;">
+        <button style="flex:1; height:48px; border-radius:14px; border:none; background:rgba(255,255,255,0.07); color:rgba(240,245,243,0.7); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer;">Cancelar</button>
+        <button style="flex:2; height:48px; border-radius:14px; border:none; background:rgba(255,70,70,0.3); color:rgba(255,120,120,0.6); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:not-allowed;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(240,245,243,0.2);">Eliminar categoría (bloqueado)</div>
+</div>
+
+<!-- ════════════════════════════
+  4. GASTOS FIJOS DARK
+════════════════════════════ -->
+<div>
+<div class="phone dark">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="white" opacity="0.3"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="white" opacity="0.55"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" opacity="0.3"/><rect x="2" y="2" width="16" height="8" rx="2" fill="white"/></svg></div></div>
+
+  <div class="scroll">
+    <div class="topbar">
+      <div><div class="topbar-title">Gastos Fijos</div><div class="topbar-sub">Suscripciones y recurrentes</div></div>
+      <button class="add-btn"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#0B1F1C" stroke-width="1.8" stroke-linecap="round"/></svg> Nuevo</button>
+    </div>
+
+    <!-- Banner total -->
+    <div class="fixed-banner">
+      <div>
+        <div class="fixed-banner-label">Total mensual activo</div>
+        <div class="fixed-banner-amount">S/ 388.90</div>
+        <div class="fixed-banner-count">5 gastos activos</div>
+      </div>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="rgba(61,255,192,0.08)"/><path d="M12 24l5-5 4 4 7-9" stroke="#3DFFC0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="sec-lbl">Activos</div>
+    <div class="fixed-grid">
+      <!-- Netflix -->
+      <div class="fixed-card">
+        <div class="fixed-card-name">Netflix</div>
+        <div class="fixed-card-amount">S/ 38.90</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 15</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(255,107,107,0.12);color:#FF6B6B;">Entreteni...</span>
+          <div class="toggle on"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <!-- Internet -->
+      <div class="fixed-card">
+        <div class="fixed-card-name">Internet Claro</div>
+        <div class="fixed-card-amount">S/ 89.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 17</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(96,165,250,0.12);color:#60A5FA;">Servicios</span>
+          <div class="toggle on"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <!-- Spotify -->
+      <div class="fixed-card">
+        <div class="fixed-card-name">Spotify</div>
+        <div class="fixed-card-amount">S/ 19.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 3</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(255,107,107,0.12);color:#FF6B6B;">Entreteni...</span>
+          <div class="toggle on"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <!-- Gimnasio -->
+      <div class="fixed-card">
+        <div class="fixed-card-name">Gimnasio</div>
+        <div class="fixed-card-amount">S/ 120.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 1</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(61,255,192,0.1);color:#3DFFC0;">Salud</span>
+          <div class="toggle on"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-lbl" style="margin-top:8px;">Inactivos</div>
+    <div class="fixed-grid">
+      <!-- Disney+ inactivo -->
+      <div class="fixed-card inactive">
+        <div class="fixed-card-name">Disney+</div>
+        <div class="fixed-card-amount">S/ 35.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 20</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(255,107,107,0.12);color:#FF6B6B;">Entreteni...</span>
+          <div class="toggle off"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)"/><rect x="13" y="3" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="rgba(240,245,243,0.25)" opacity="0.4"/></svg><span class="nav-lbl">Inicio</span></div>
+    <div class="nav-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="3" stroke="#3DFFC0" stroke-width="1.6"/><path d="M8 9h8M8 12h5" stroke="#3DFFC0" stroke-width="1.4" stroke-linecap="round"/></svg><span class="nav-lbl" style="color:#3DFFC0;">Fijos</span></div>
+    <div class="nav-fab"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="#0B1F1C" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="rgba(240,245,243,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Categorías</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="rgba(240,245,243,0.25)" stroke-width="1.6"/><path d="M5 20s0-5 7-5 7 5 7 5" stroke="rgba(240,245,243,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Perfil</span></div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(240,245,243,0.2);">Gastos Fijos · Lista · Dark</div>
+</div>
+
+<!-- ════════════════════════════
+  5. NUEVO GASTO FIJO DARK
+════════════════════════════ -->
+<div>
+<div class="phone dark">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="white" opacity="0.3"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+
+  <div style="height:calc(100% - 48px); display:flex; flex-direction:column; justify-content:flex-end;">
+    <div style="flex:1; opacity:0.2; padding:20px;">
+      <div style="height:70px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:70px; background:rgba(255,255,255,0.05); border-radius:16px; margin-bottom:8px;"></div>
+    </div>
+
+    <div style="background:#112620; border-radius:28px 28px 0 0; padding:20px 22px 36px; border:1px solid rgba(61,255,192,0.1); border-bottom:none;">
+      <div style="width:40px; height:4px; border-radius:2px; background:rgba(255,255,255,0.15); margin:0 auto 20px;"></div>
+      <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#F0F5F3; margin-bottom:20px;">Nuevo gasto fijo</div>
+
+      <div class="form-group">
+        <div class="form-label">Nombre</div>
+        <input class="form-input" placeholder="Ej: Netflix, Luz, Internet..." style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+        <div>
+          <div class="form-label">Monto</div>
+          <input class="form-input" placeholder="S/ 0.00" style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+        </div>
+        <div>
+          <div class="form-label">Moneda</div>
+          <select class="form-input" style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+            <option>PEN — S/</option>
+            <option>USD — $</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+        <div>
+          <div class="form-label">Día de cobro</div>
+          <input class="form-input" placeholder="1 – 31" type="number" style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+        </div>
+        <div>
+          <div class="form-label">Categoría</div>
+          <select class="form-input" style="background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);">
+            <option>Seleccionar...</option>
+            <option>Entretenimiento</option>
+            <option>Servicios</option>
+            <option>Salud</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <div class="form-label">Notas (opcional)</div>
+        <textarea class="form-input" placeholder="Descripción breve..." style="height:70px; padding:12px 14px; resize:none; background:rgba(255,255,255,0.06);color:#F0F5F3;border-color:rgba(255,255,255,0.08);"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" style="background:rgba(255,255,255,0.07);color:rgba(240,245,243,0.7);">Cancelar</button>
+        <button class="btn-save" style="background:#3DFFC0;color:#0B1F1C;">Crear</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(240,245,243,0.2);">Nuevo gasto fijo · Dark</div>
+</div>
+
+<!-- ════════════════════════════
+  6. CATEGORÍAS LISTA LIGHT
+════════════════════════════ -->
+<div>
+<div class="phone light">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#1A1A2E" opacity="0.25"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="#1A1A2E" opacity="0.5"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="#1A1A2E" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1A1A2E"/></svg><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1A1A2E" opacity="0.25"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#1A1A2E"/></svg></div></div>
+
+  <div class="scroll">
+    <div class="topbar">
+      <div><div class="topbar-title">Categorías</div><div class="topbar-sub">8 categorías configuradas</div></div>
+      <button class="add-btn"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg> Nueva</button>
+    </div>
+    <div class="search-bar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="rgba(26,26,46,0.3)" stroke-width="1.4"/><path d="M11 11l3 3" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input placeholder="Buscar categoría...">
+    </div>
+
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(255,107,107,0.1);">🍽️</div>
+        <div class="cat-group-info">
+          <div class="cat-group-name">Salidas</div>
+          <div class="cat-group-meta">4 subcategorías <span class="budget-tag">S/ 1,000 límite</span></div>
+        </div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="rgba(26,26,46,0.6)" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron open" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="cat-subcats">
+        <div class="subcat-row"><div class="subcat-dot" style="background:#C0392B;"></div><span class="subcat-name">Restaurantes</span><div class="subcat-actions"><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 9l1.5-1.5 4.5-4.5 1.5 1.5-4.5 4.5L3.5 10.5 2 9Z" stroke="rgba(26,26,46,0.3)" stroke-width="1.1"/></svg></button><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M4 3V2h5v1M3.5 3v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="rgba(192,57,43,0.5)" stroke-width="1.1" stroke-linecap="round"/></svg></button></div></div>
+        <div class="subcat-row"><div class="subcat-dot" style="background:#C0392B;"></div><span class="subcat-name">Cafeterías</span><div class="subcat-actions"><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 9l1.5-1.5 4.5-4.5 1.5 1.5-4.5 4.5L3.5 10.5 2 9Z" stroke="rgba(26,26,46,0.3)" stroke-width="1.1"/></svg></button><button class="subcat-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3h10M4 3V2h5v1M3.5 3v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="rgba(192,57,43,0.5)" stroke-width="1.1" stroke-linecap="round"/></svg></button></div></div>
+        <div class="add-subcat"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="rgba(26,26,46,0.4)" stroke-width="1.5" stroke-linecap="round"/></svg>Agregar subcategoría</div>
+      </div>
+    </div>
+
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(30,80,180,0.08);">🚌</div>
+        <div class="cat-group-info"><div class="cat-group-name">Transporte</div><div class="cat-group-meta">3 subcategorías</div></div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="rgba(26,26,46,0.6)" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(45,106,79,0.09);">🛒</div>
+        <div class="cat-group-info"><div class="cat-group-name">Alimentación</div><div class="cat-group-meta">2 subcategorías <span class="budget-tag">S/ 600 límite</span></div></div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="rgba(26,26,46,0.6)" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div class="cat-group" style="margin-bottom:8px;">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(120,80,200,0.08);">💊</div>
+        <div class="cat-group-info"><div class="cat-group-name">Salud</div><div class="cat-group-meta">2 subcategorías <span class="budget-tag">S/ 500 límite</span></div></div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="rgba(26,26,46,0.6)" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div class="cat-group">
+      <div class="cat-group-header">
+        <div class="cat-group-icon" style="background:rgba(180,140,20,0.08);">💼</div>
+        <div class="cat-group-info"><div class="cat-group-name">Trabajo</div><div class="cat-group-meta">1 subcategoría</div></div>
+        <div class="cat-group-actions">
+          <button class="cat-action edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10l2-2 6-6 2 2-6 6-2 2-2 0 0-2Z" stroke="rgba(26,26,46,0.6)" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+          <button class="cat-action del"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M4 3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+        </div>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(26,26,46,0.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="rgba(26,26,46,0.25)"/><rect x="13" y="3" width="8" height="8" rx="2" fill="rgba(26,26,46,0.25)" opacity="0.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="rgba(26,26,46,0.25)" opacity="0.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="rgba(26,26,46,0.25)" opacity="0.4"/></svg><span class="nav-lbl">Inicio</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="rgba(26,26,46,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Movimientos</span></div>
+    <div class="nav-fab"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <div class="nav-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="#1A1A2E" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="17" r="4" fill="#1A1A2E"/><path d="M15.5 17h3M17 15.5v3" stroke="#F2F2F7" stroke-width="1.4" stroke-linecap="round"/></svg><span class="nav-lbl" style="color:#1A1A2E;">Categorías</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="rgba(26,26,46,0.25)" stroke-width="1.6"/><path d="M5 20s0-5 7-5 7 5 7 5" stroke="rgba(26,26,46,0.25)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Perfil</span></div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(26,26,46,0.25);">Categorías · Lista · Light</div>
+</div>
+
+<!-- ════════════════════════════
+  7. NUEVA CATEGORÍA LIGHT
+════════════════════════════ -->
+<div>
+<div class="phone light">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#1A1A2E" opacity="0.25"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="#1A1A2E" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1A1A2E"/></svg></div></div>
+
+  <div style="height:calc(100% - 48px); display:flex; flex-direction:column; justify-content:flex-end;">
+    <div style="flex:1; padding:20px; opacity:0.12;">
+      <div style="height:70px; background:rgba(26,26,46,0.06); border-radius:16px; margin-bottom:8px;"></div>
+      <div style="height:70px; background:rgba(26,26,46,0.06); border-radius:16px; margin-bottom:8px;"></div>
+    </div>
+
+    <div style="background:#fff; border-radius:28px 28px 0 0; padding:20px 22px 36px; box-shadow:0 -4px 30px rgba(0,0,0,0.08);">
+      <div style="width:40px; height:4px; border-radius:2px; background:rgba(26,26,46,0.12); margin:0 auto 20px;"></div>
+      <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#1A1A2E; margin-bottom:16px;">Nueva categoría</div>
+
+      <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:14px; background:#F2F2F7; margin-bottom:16px;">
+        <div style="width:32px; height:32px; border-radius:10px; background:rgba(192,57,43,0.1); display:flex; align-items:center; justify-content:center; font-size:16px;">🛍️</div>
+        <span style="font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#1A1A2E;">Compras</span>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Nombre</div>
+        <input class="form-input" value="Compras" style="background:#F2F2F7;border-color:rgba(26,26,46,0.2);background:#fff;color:#1A1A2E;">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Color</div>
+        <div class="color-row">
+          <div class="color-dot selected" style="background:#C0392B;"></div>
+          <div class="color-dot" style="background:#2D6A4F;"></div>
+          <div class="color-dot" style="background:#1E50B4;"></div>
+          <div class="color-dot" style="background:#B45309;"></div>
+          <div class="color-dot" style="background:#7C3AED;"></div>
+          <div class="color-dot" style="background:#DB2777;"></div>
+          <div class="color-dot" style="background:#EA580C;"></div>
+          <div class="color-dot" style="background:#059669;"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Ícono</div>
+        <div class="icon-grid">
+          <div class="icon-cell">🛒</div><div class="icon-cell selected" style="background:#1A1A2E;">🛍️</div><div class="icon-cell">🚌</div>
+          <div class="icon-cell">🍽️</div><div class="icon-cell">💊</div><div class="icon-cell">💼</div>
+          <div class="icon-cell">✈️</div><div class="icon-cell">🏠</div><div class="icon-cell">🎮</div>
+          <div class="icon-cell">📱</div><div class="icon-cell">🎵</div><div class="icon-cell">🏋️</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <div class="form-label">Límite mensual (opcional)</div>
+        <input class="form-input" placeholder="S/ 0.00" style="background:#F2F2F7;color:#1A1A2E;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" style="background:rgba(26,26,46,0.07);color:rgba(26,26,46,0.6);">Cancelar</button>
+        <button class="btn-save" style="background:#1A1A2E;color:#fff;">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(26,26,46,0.25);">Nueva categoría · Light</div>
+</div>
+
+<!-- ════════════════════════════
+  8. GASTOS FIJOS LIGHT
+════════════════════════════ -->
+<div>
+<div class="phone light">
+  <div class="notch"></div>
+  <div class="status"><span>9:41</span><div class="st-r"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#1A1A2E" opacity="0.25"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="#1A1A2E" opacity="0.5"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="#1A1A2E" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1A1A2E"/></svg></div></div>
+
+  <div class="scroll">
+    <div class="topbar">
+      <div><div class="topbar-title">Gastos Fijos</div><div class="topbar-sub">Suscripciones y recurrentes</div></div>
+      <button class="add-btn"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg> Nuevo</button>
+    </div>
+
+    <div class="fixed-banner">
+      <div>
+        <div class="fixed-banner-label">Total mensual activo</div>
+        <div class="fixed-banner-amount">S/ 388.90</div>
+        <div class="fixed-banner-count">5 gastos activos</div>
+      </div>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="rgba(26,26,46,0.06)"/><path d="M12 24l5-5 4 4 7-9" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="sec-lbl">Activos</div>
+    <div class="fixed-grid">
+      <div class="fixed-card">
+        <div class="fixed-card-name">Netflix</div>
+        <div class="fixed-card-amount">S/ 38.90</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 15</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(192,57,43,0.08);color:#C0392B;">Entreten...</span>
+          <div class="toggle on" style="background:#2D6A4F;"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <div class="fixed-card">
+        <div class="fixed-card-name">Internet Claro</div>
+        <div class="fixed-card-amount">S/ 89.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 17</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(30,80,180,0.07);color:#1E50B4;">Servicios</span>
+          <div class="toggle on" style="background:#2D6A4F;"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <div class="fixed-card">
+        <div class="fixed-card-name">Spotify</div>
+        <div class="fixed-card-amount">S/ 19.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 3</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(192,57,43,0.08);color:#C0392B;">Entreten...</span>
+          <div class="toggle on" style="background:#2D6A4F;"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+      <div class="fixed-card">
+        <div class="fixed-card-name">Gimnasio</div>
+        <div class="fixed-card-amount">S/ 120.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 1</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(45,106,79,0.09);color:#2D6A4F;">Salud</span>
+          <div class="toggle on" style="background:#2D6A4F;"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-lbl" style="margin-top:8px;">Inactivos</div>
+    <div class="fixed-grid">
+      <div class="fixed-card inactive">
+        <div class="fixed-card-name">Disney+</div>
+        <div class="fixed-card-amount">S/ 35.00</div>
+        <div class="fixed-card-day"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="0.5" y="1.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M0.5 4.5h10" stroke="currentColor" stroke-width="1"/></svg> Día 20</div>
+        <div class="fixed-card-footer">
+          <span class="fixed-cat-badge" style="background:rgba(192,57,43,0.08);color:#C0392B;">Entreten...</span>
+          <div class="toggle off"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="rgba(26,26,46,0.22)"/><rect x="13" y="3" width="8" height="8" rx="2" fill="rgba(26,26,46,0.22)" opacity="0.4"/><rect x="3" y="13" width="8" height="8" rx="2" fill="rgba(26,26,46,0.22)" opacity="0.4"/><rect x="13" y="13" width="8" height="8" rx="2" fill="rgba(26,26,46,0.22)" opacity="0.4"/></svg><span class="nav-lbl">Inicio</span></div>
+    <div class="nav-item active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="3" stroke="#1A1A2E" stroke-width="1.6"/><path d="M8 9h8M8 12h5" stroke="#1A1A2E" stroke-width="1.4" stroke-linecap="round"/></svg><span class="nav-lbl" style="color:#1A1A2E;">Fijos</span></div>
+    <div class="nav-fab"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h12M4 18h8" stroke="rgba(26,26,46,0.22)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Categorías</span></div>
+    <div class="nav-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="rgba(26,26,46,0.22)" stroke-width="1.6"/><path d="M5 20s0-5 7-5 7 5 7 5" stroke="rgba(26,26,46,0.22)" stroke-width="1.6" stroke-linecap="round"/></svg><span class="nav-lbl">Perfil</span></div>
+  </div>
+</div>
+<div class="col-label" style="color:rgba(26,26,46,0.25);">Gastos Fijos · Lista · Light</div>
+</div>
+
+</body>
+</html>

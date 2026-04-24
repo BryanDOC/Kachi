@@ -8,7 +8,6 @@ interface UseTransactionsOptions {
   startDate?: string;
   endDate?: string;
   categoryId?: string;
-  subcategoryId?: string;
   type?: 'expense' | 'income' | 'all';
 }
 
@@ -29,7 +28,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           *,
           currencies(*),
           categories(*),
-          subcategories(*),
+          transaction_tags(subcategories(*)),
           trips(*)
         `
         )
@@ -45,10 +44,6 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
       if (options.categoryId) {
         query = query.eq('category_id', options.categoryId);
-      }
-
-      if (options.subcategoryId) {
-        query = query.eq('subcategory_id', options.subcategoryId);
       }
 
       if (options.type && options.type !== 'all') {
@@ -70,7 +65,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
   useEffect(() => {
     fetchTransactions();
-  }, [options.startDate, options.endDate, options.categoryId, options.subcategoryId, options.type]);
+  }, [options.startDate, options.endDate, options.categoryId, options.type]);
 
   return {
     transactions,

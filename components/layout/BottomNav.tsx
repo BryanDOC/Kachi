@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useUI } from '@/lib/context/ui-context';
 
 const navItems = [
   {
@@ -103,6 +104,7 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { setTxSheetOpen } = useUI();
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[83px] bg-bg border-t border-border z-40 flex items-start justify-around px-2 pt-3">
@@ -125,8 +127,8 @@ export function BottomNav() {
       })}
 
       {/* FAB */}
-      <Link
-        href="/dashboard/transactions/new"
+      <button
+        onClick={() => setTxSheetOpen(true)}
         className="w-[52px] h-[52px] rounded-full bg-accent flex items-center justify-center -mt-6 shadow-[0_4px_20px_rgba(var(--accent-rgb),0.35)]"
       >
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -137,7 +139,7 @@ export function BottomNav() {
             strokeLinecap="round"
           />
         </svg>
-      </Link>
+      </button>
 
       {navItems.slice(2).map((item) => {
         const isActive = pathname === item.href;

@@ -12,6 +12,9 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
         display: ['var(--font-syne)', 'system-ui', 'sans-serif'],
+        numeric: ['var(--font-numeric)', 'system-ui', 'sans-serif'],
+        brand: ['var(--font-changa)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-barlow)', 'system-ui', 'sans-serif'],
       },
       colors: {
         bg: 'var(--bg)',

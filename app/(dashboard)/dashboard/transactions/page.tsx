@@ -53,6 +53,16 @@ function formatShortDate(dateStr: string) {
   return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
 }
 
+function groupByDate(txs: MockTx[]) {
+  const groups: Record<string, MockTx[]> = {};
+  for (const tx of txs) {
+    const key = formatShortDate(tx.date);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  }
+  return Object.entries(groups);
+}
+
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
@@ -72,6 +82,8 @@ export default function TransactionsPage() {
     const matchSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchType && matchCat && matchSearch;
   });
+
+  const grouped = groupByDate(filtered);
 
   const handleDelete = async () => {
     if (!selectedTx) return;
@@ -114,7 +126,7 @@ export default function TransactionsPage() {
             <TrendingDown size={13} className="text-[#FF6B6B]" />
             <p className="text-[10px] font-semibold uppercase tracking-[0.4px] text-text3">Gastos</p>
           </div>
-          <p className="font-numeric text-[16px] font-extrabold text-[#FF6B6B]">
+          <p className="text-[16px] font-semibold tabular-nums text-[#FF6B6B]">
             S/ {MOCK_GASTOS.toFixed(2)}
           </p>
         </div>
@@ -123,7 +135,7 @@ export default function TransactionsPage() {
             <TrendingUp size={13} className="text-accent" />
             <p className="text-[10px] font-semibold uppercase tracking-[0.4px] text-text3">Ingresos</p>
           </div>
-          <p className="font-numeric text-[16px] font-extrabold text-accent">
+          <p className="text-[16px] font-semibold tabular-nums text-accent">
             S/ {MOCK_INGRESOS.toFixed(2)}
           </p>
         </div>
@@ -133,7 +145,7 @@ export default function TransactionsPage() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.4px] text-text3">Balance</p>
           </div>
           <p className={cn(
-            'font-numeric text-[16px] font-extrabold',
+            'text-[16px] font-semibold tabular-nums',
             MOCK_INGRESOS - MOCK_GASTOS >= 0 ? 'text-accent' : 'text-[#FF6B6B]'
           )}>
             S/ {(MOCK_INGRESOS - MOCK_GASTOS).toFixed(2)}
@@ -198,67 +210,77 @@ export default function TransactionsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((tx, index) => (
+        <div className="space-y-5">
+          {grouped.map(([dateLabel, txs], groupIndex) => (
             <motion.div
-              key={tx.id}
+              key={dateLabel}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04 }}
-              className="flex items-center gap-3 px-4 py-3.5 rounded-[16px] bg-bg-input/40 border border-border"
+              transition={{ delay: groupIndex * 0.05 }}
             >
-              {/* Type dot */}
-              <div
-                className={cn(
-                  'w-9 h-9 rounded-[12px] flex items-center justify-center flex-shrink-0',
-                  tx.type === 'income' ? 'bg-accent/12' : 'bg-[rgba(255,107,107,0.12)]'
-                )}
-              >
-                {tx.type === 'income' ? (
-                  <TrendingUp size={16} className="text-accent" />
-                ) : (
-                  <TrendingDown size={16} className="text-[#FF6B6B]" />
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-text1 truncate">{tx.description}</p>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-[12px] text-text3">{formatShortDate(tx.date)}</span>
-                  {tx.catName && (
-                    <span
-                      className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
-                      style={{
-                        backgroundColor: (tx.catColor || '#52525b') + '20',
-                        color: tx.catColor || '#a1a1aa',
-                      }}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-text3 px-1 mb-2">
+                {dateLabel}
+              </p>
+              <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
+                {txs.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 group"
+                  >
+                    <div
+                      className={cn(
+                        'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+                        tx.type === 'income' ? 'bg-accent/10' : 'bg-[rgba(255,107,107,0.08)]'
+                      )}
                     >
-                      {tx.catName}
-                    </span>
-                  )}
-                  {tx.subcatName && (
-                    <span className="text-[11px] text-text3">· {tx.subcatName}</span>
-                  )}
-                </div>
-              </div>
+                      {tx.type === 'income' ? (
+                        <TrendingUp size={15} className="text-accent" />
+                      ) : (
+                        <TrendingDown size={15} className="text-[#FF6B6B]" />
+                      )}
+                    </div>
 
-              {/* Amount + delete */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <p
-                  className={cn(
-                    'font-numeric text-[15px] font-bold',
-                    tx.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
-                  )}
-                >
-                  {tx.type === 'income' ? '+' : '-'}S/ {tx.amount.toFixed(2)}
-                </p>
-                <button
-                  onClick={() => { setSelectedTx(tx); setShowDelete(true); }}
-                  className="w-7 h-7 rounded-[8px] flex items-center justify-center text-text3 hover:text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.10)] transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-medium text-text1 truncate leading-snug">{tx.description}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {tx.catName && (
+                          <span
+                            className="text-[12px] font-medium"
+                            style={{ color: tx.catColor || 'var(--text3)' }}
+                          >
+                            {tx.catName}
+                          </span>
+                        )}
+                        {tx.subcatName && (
+                          <>
+                            <span className="text-[12px] text-text3/50">·</span>
+                            <span className="text-[12px] text-text3">{tx.subcatName}</span>
+                          </>
+                        )}
+                        {tx.notes && !tx.catName && (
+                          <span className="text-[12px] text-text3 truncate">{tx.notes}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <p
+                        className={cn(
+                          'text-[14px] font-semibold tabular-nums',
+                          tx.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
+                        )}
+                      >
+                        {tx.type === 'income' ? '+' : '-'} S/ {tx.amount.toFixed(2)}
+                      </p>
+                      <button
+                        onClick={() => { setSelectedTx(tx); setShowDelete(true); }}
+                        className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-[8px] flex items-center justify-center text-text3 hover:text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.10)] transition-all"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           ))}

@@ -13,21 +13,18 @@ export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Profile state
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Currencies state
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loadingCurrencies, setLoadingCurrencies] = useState(true);
   const [addCurrModal, setAddCurrModal] = useState(false);
   const [currForm, setCurrForm] = useState({ code: '', name: '', symbol: '' });
   const [savingCurr, setSavingCurr] = useState(false);
 
-  // Delete account state
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -112,15 +109,12 @@ export default function SettingsPage() {
   };
 
   const setDefaultCurrency = async (id: string) => {
-    // Remove default from all, then set chosen
     await supabase
       .from('currencies')
       .update({ is_default: false })
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // update all
+      .neq('id', '00000000-0000-0000-0000-000000000000');
     await supabase.from('currencies').update({ is_default: true }).eq('id', id);
-    setCurrencies((prev) =>
-      prev.map((c) => ({ ...c, is_default: c.id === id }))
-    );
+    setCurrencies((prev) => prev.map((c) => ({ ...c, is_default: c.id === id })));
     toast.success('Divisa predeterminada actualizada');
   };
 
@@ -134,7 +128,6 @@ export default function SettingsPage() {
       toast.error(`No puedes eliminar "${curr.code}" — se usa en ${count} transacciones`);
       return;
     }
-
     if (curr.is_default) {
       toast.error('No puedes eliminar la divisa predeterminada');
       return;
@@ -196,32 +189,38 @@ export default function SettingsPage() {
     }
   };
 
+  const inputClass =
+    'w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus transition-colors';
+
+  const labelClass = 'block text-[11px] font-semibold uppercase tracking-[0.5px] text-text3 mb-1.5';
+
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-6 max-w-lg mx-auto lg:max-w-2xl">
+      {/* Page title */}
       <div>
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Configuración</h1>
-        <p className="text-zinc-400">Administra tu perfil, divisas y cuenta</p>
+        <h1 className="font-sans text-[20px] font-bold text-text1">Configuración</h1>
+        <p className="text-[13px] text-text3 mt-0.5">Perfil, divisas y cuenta</p>
       </div>
 
       {/* Profile section */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-5">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <User size={18} className="text-amber-500" />
+      <section className="bg-bg-input/50 border border-border rounded-[20px] p-5 space-y-5">
+        <h2 className="text-[15px] font-semibold text-text1 flex items-center gap-2">
+          <User size={16} className="text-accent" />
           Perfil
         </h2>
 
         {/* Avatar */}
         <div className="flex items-center gap-4">
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt="Avatar"
-                className="w-16 h-16 rounded-full object-cover border-2 border-zinc-700"
+                className="w-14 h-14 rounded-full object-cover border-2 border-border"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center">
-                <User size={28} className="text-zinc-500" />
+              <div className="w-14 h-14 rounded-full bg-bg-input border-2 border-border flex items-center justify-center">
+                <User size={24} className="text-text3" />
               </div>
             )}
           </div>
@@ -229,11 +228,11 @@ export default function SettingsPage() {
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploadingAvatar}
-              className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 bg-bg-input border border-border text-text2 rounded-[12px] hover:border-border-focus transition-colors text-[13px] font-medium disabled:opacity-50"
             >
               {uploadingAvatar ? 'Subiendo...' : 'Cambiar foto'}
             </button>
-            <p className="text-xs text-zinc-500 mt-1">JPG, PNG o GIF. Máx 2MB.</p>
+            <p className="text-[11px] text-text3 mt-1">JPG, PNG o GIF. Máx 2MB.</p>
             <input
               ref={fileRef}
               type="file"
@@ -249,34 +248,33 @@ export default function SettingsPage() {
 
         {/* Full name */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-            Nombre completo
-          </label>
+          <label className={labelClass}>Nombre completo</label>
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-amber-500"
+            className={inputClass}
+            placeholder="Tu nombre"
           />
         </div>
 
         <button
           onClick={saveProfile}
           disabled={savingProfile}
-          className="px-5 py-2.5 bg-amber-500 text-black font-medium rounded-lg hover:bg-amber-400 transition-colors disabled:opacity-50"
+          className="px-5 py-2.5 bg-accent text-bg text-[13px] font-semibold rounded-[12px] hover:opacity-85 transition-opacity disabled:opacity-50"
         >
           {savingProfile ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </section>
 
       {/* Currencies section */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+      <section className="bg-bg-input/50 border border-border rounded-[20px] p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Divisas</h2>
+          <h2 className="text-[15px] font-semibold text-text1">Divisas</h2>
           <button
             onClick={() => setAddCurrModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border text-text2 rounded-[10px] hover:border-border-focus transition-colors text-[13px]"
           >
-            <Plus size={14} />
+            <Plus size={13} />
             Agregar
           </button>
         </div>
@@ -284,43 +282,40 @@ export default function SettingsPage() {
         {loadingCurrencies ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
-              <div key={i} className="h-12 bg-zinc-800 rounded-lg animate-pulse" />
+              <div key={i} className="h-12 bg-bg-input rounded-[14px] animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-border/50">
             {currencies.map((curr) => (
-              <div
-                key={curr.id}
-                className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-lg"
-              >
-                <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center font-bold text-zinc-300 text-sm">
+              <div key={curr.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="w-10 h-10 rounded-[12px] bg-bg-input border border-border flex items-center justify-center font-semibold text-text2 text-[13px] flex-shrink-0">
                   {curr.symbol}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-white font-medium text-sm">{curr.code}</span>
+                    <span className="text-[14px] font-medium text-text1">{curr.code}</span>
                     {curr.is_default && (
-                      <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-500 rounded font-medium">
+                      <span className="text-[11px] px-1.5 py-0.5 bg-accent/12 text-accent rounded-full font-medium">
                         Predeterminada
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-500">{curr.name}</span>
+                  <span className="text-[12px] text-text3">{curr.name}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {!curr.is_default && (
                     <button
                       onClick={() => setDefaultCurrency(curr.id)}
                       title="Establecer como predeterminada"
-                      className="p-1.5 text-zinc-500 hover:text-amber-500 hover:bg-zinc-700 rounded-lg transition-colors"
+                      className="p-1.5 text-text3 hover:text-accent hover:bg-accent/10 rounded-[8px] transition-colors"
                     >
                       <Star size={14} />
                     </button>
                   )}
                   <button
                     onClick={() => deleteCurrency(curr)}
-                    className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors"
+                    className="p-1.5 text-text3 hover:text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.10)] rounded-[8px] transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -332,12 +327,12 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger zone */}
-      <section className="bg-zinc-900 border border-red-900/50 rounded-xl p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-red-400 flex items-center gap-2">
-          <AlertTriangle size={18} />
+      <section className="bg-bg-input/50 border border-[rgba(255,107,107,0.25)] rounded-[20px] p-5 space-y-4">
+        <h2 className="text-[15px] font-semibold text-[#FF6B6B] flex items-center gap-2">
+          <AlertTriangle size={16} />
           Zona de peligro
         </h2>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-[13px] text-text3">
           Eliminar tu cuenta borrará permanentemente todos tus datos. Esta acción no se puede
           deshacer.
         </p>
@@ -346,7 +341,7 @@ export default function SettingsPage() {
             setDeleteConfirmText('');
             setDeleteModal(true);
           }}
-          className="px-4 py-2.5 bg-red-600/20 text-red-400 border border-red-600/40 rounded-lg hover:bg-red-600/30 transition-colors text-sm font-medium"
+          className="px-4 py-2.5 bg-[rgba(255,107,107,0.10)] text-[#FF6B6B] border border-[rgba(255,107,107,0.25)] rounded-[12px] hover:bg-[rgba(255,107,107,0.18)] transition-colors text-[13px] font-medium"
         >
           Eliminar cuenta
         </button>
@@ -361,47 +356,47 @@ export default function SettingsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Código <span className="text-zinc-500">(ej: EUR)</span>
+            <label className={labelClass}>
+              Código <span className="text-text3/60 normal-case tracking-normal">(ej: EUR)</span>
             </label>
             <input
               value={currForm.code}
               onChange={(e) => setCurrForm((f) => ({ ...f, code: e.target.value }))}
               placeholder="USD"
               maxLength={5}
-              className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-amber-500 uppercase"
+              className={cn(inputClass, 'uppercase')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nombre</label>
+            <label className={labelClass}>Nombre</label>
             <input
               value={currForm.name}
               onChange={(e) => setCurrForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Euro"
-              className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-amber-500"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Símbolo</label>
+            <label className={labelClass}>Símbolo</label>
             <input
               value={currForm.symbol}
               onChange={(e) => setCurrForm((f) => ({ ...f, symbol: e.target.value }))}
               placeholder="€"
               maxLength={5}
-              className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-amber-500"
+              className={inputClass}
             />
           </div>
           <div className="flex gap-3 pt-1">
             <button
               onClick={() => setAddCurrModal(false)}
-              className="flex-1 px-4 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2.5 bg-bg-input border border-border text-text2 rounded-[12px] hover:border-border-focus transition-colors text-[13px] font-medium"
             >
               Cancelar
             </button>
             <button
               onClick={addCurrency}
               disabled={savingCurr}
-              className="flex-1 px-4 py-2.5 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition-colors font-medium disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 bg-accent text-bg rounded-[12px] hover:opacity-85 transition-opacity text-[13px] font-semibold disabled:opacity-50"
             >
               {savingCurr ? 'Guardando...' : 'Agregar'}
             </button>
@@ -417,27 +412,29 @@ export default function SettingsPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-zinc-300 text-sm">
-            Esto eliminará permanentemente tu cuenta y todos tus datos (transacciones,
-            categorías, viajes).
+          <p className="text-[13px] text-text2">
+            Esto eliminará permanentemente tu cuenta y todos tus datos (transacciones, categorías,
+            viajes).
           </p>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className={labelClass}>
               Escribe{' '}
-              <span className="text-red-400 font-mono font-semibold">ELIMINAR</span> para
-              confirmar
+              <span className="text-[#FF6B6B] font-mono font-semibold normal-case tracking-normal">
+                ELIMINAR
+              </span>{' '}
+              para confirmar
             </label>
             <input
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="ELIMINAR"
-              className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-red-500"
+              className={inputClass}
             />
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setDeleteModal(false)}
-              className="flex-1 px-4 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2.5 bg-bg-input border border-border text-text2 rounded-[12px] hover:border-border-focus transition-colors text-[13px] font-medium"
             >
               Cancelar
             </button>
@@ -445,10 +442,10 @@ export default function SettingsPage() {
               onClick={deleteAccount}
               disabled={deleteConfirmText !== 'ELIMINAR' || deleting}
               className={cn(
-                'flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors',
+                'flex-1 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors',
                 deleteConfirmText === 'ELIMINAR'
-                  ? 'bg-red-600 text-white hover:bg-red-500'
-                  : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                  ? 'bg-[#FF4444] text-white hover:opacity-90'
+                  : 'bg-bg-input border border-border text-text3 cursor-not-allowed'
               )}
             >
               {deleting ? 'Eliminando...' : 'Eliminar cuenta'}

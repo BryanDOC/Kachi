@@ -27,16 +27,9 @@ export interface Category {
 
 export interface Subcategory {
   id: string;
+  category_id: string;
   user_id: string;
   name: string;
-  created_at: string;
-  category_id?: string | null;
-}
-
-export interface TransactionTag {
-  id: string;
-  transaction_id: string;
-  subcategory_id: string;
   created_at: string;
 }
 
@@ -51,9 +44,9 @@ export interface FixedExpense {
   is_active: boolean;
   last_updated: string;
   notes: string | null;
+  created_at: string;
   logo_url: string | null;
   brand_color: string | null;
-  created_at: string;
 }
 
 export interface Trip {
@@ -75,6 +68,7 @@ export interface Transaction {
   amount: number;
   currency_id: string;
   category_id: string | null;
+  subcategory_id: string | null;
   trip_id: string | null;
   fixed_expense_id: string | null;
   description: string;
@@ -86,7 +80,7 @@ export interface Transaction {
 export interface TransactionWithRelations extends Transaction {
   currencies?: Currency;
   categories?: Category;
-  transaction_tags?: Array<{ subcategories: Subcategory }>;
+  subcategories?: Subcategory;
   trips?: Trip;
 }
 

@@ -297,7 +297,7 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
         </label>
         <textarea
           rows={2}
-          className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-[15px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus transition-colors"
+          className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus transition-colors"
           placeholder="Notas adicionales..."
           {...register('notes')}
         />

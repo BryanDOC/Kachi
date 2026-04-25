@@ -45,7 +45,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
               </div>
               {/* Title */}
               <div className="px-6 pt-2 pb-4">
-                <h2 className="font-display text-[20px] font-extrabold text-text1">{title}</h2>
+                <h2 className="font-sans text-[18px] font-semibold text-text1">{title}</h2>
               </div>
               {/* Content */}
               <div className="px-6 pb-10 overflow-y-auto max-h-[80vh]">{children}</div>

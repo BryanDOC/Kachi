@@ -133,7 +133,7 @@ function BlurCard({ expense, index, onEdit, onToggle, isToggling, inactive }: Fi
         <div className="mt-auto pt-3">
           <div className='flex flex-col gap-2'>
           <p className="text-[12px] font-medium text-white/55 mb-1 truncate">{expense.name}</p>
-          <p className="font-numeric text-[20px] font-bold italic text-white leading-none mb-2">
+          <p className="font-sans text-[18px] font-semibold text-white tabular-nums leading-none mb-2">
             {formatCurrency(expense.amount, expense.currencies?.code || 'PEN')}
           </p>
           {expense.categories && (
@@ -191,7 +191,7 @@ function GradientCard({ expense, index, onEdit, onToggle, isToggling, inactive }
         <div className="mt-auto pt-3 ">
           <div className='flex flex-col gap-2'>
           <p className="text-[12px] font-medium text-white/55 mb-0.5 truncate">{expense.name}</p>
-          <p className="font-numeric text-[20px] font-bold italic text-white leading-none mb-2">
+          <p className="font-sans text-[18px] font-semibold text-white tabular-nums leading-none mb-2">
             {formatCurrency(expense.amount, expense.currencies?.code || 'PEN')}
           </p>
           {expense.categories && (
@@ -252,7 +252,7 @@ function GlassCard({ expense, index, onEdit, onToggle, isToggling, inactive }: F
         <div className="mt-auto pt-3">
           <div className='flex flex-col gap-2'>
           <p className="text-[12px] font-medium text-text2 mb-0.5 truncate">{expense.name}</p>
-          <p className="font-numeric text-[20px] font-bold italic text-text1 leading-none mb-2">
+          <p className="font-sans text-[18px] font-semibold text-text1 tabular-nums leading-none mb-2">
             {formatCurrency(expense.amount, expense.currencies?.code || 'PEN')}
           </p>
           {expense.categories && (

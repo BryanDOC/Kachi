@@ -23,11 +23,11 @@ export function TripCardVertical({ name, dates, total, emoji, gradient, href }: 
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3.5">
-        <p className="font-display text-[15px] font-extrabold text-white tracking-tight leading-tight mb-0.5">
+        <p className="font-sans text-[14px] font-semibold text-white leading-tight mb-0.5">
           {name}
         </p>
         <p className="text-[11px] text-white/55 mb-2">{dates}</p>
-        <p className="font-numeric text-[13px] font-bold text-white/85">{total}</p>
+        <p className="font-sans text-[12px] font-medium text-white/85 tabular-nums">{total}</p>
       </div>
     </Link>
   );

@@ -23,7 +23,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
           <User size={17} />
         </button>
         <div>
-          <h1 className="font-display text-[26px] font-extrabold text-text1 tracking-tight leading-none">
+          <h1 className="font-sans text-[20px] font-bold text-text1 leading-tight">
             {title}
           </h1>
           {subtitle && <p className="text-[13px] text-text3 mt-0.5">{subtitle}</p>}

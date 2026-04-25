@@ -1,48 +1,26 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { fixedExpenseSchema, type FixedExpenseFormData } from '@/lib/validations/fixedExpense.schema';
+import {
+  fixedExpenseSchema,
+  type FixedExpenseFormData,
+} from '@/lib/validations/fixedExpense.schema';
 import { useFixedExpenses } from '@/lib/hooks/useFixedExpenses';
 import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency } from '@/lib/utils/currency';
-import { extractDominantColor } from '@/lib/utils/colorExtractor';
-import { EXPENSE_SUGGESTIONS, type ExpenseSuggestion } from '@/lib/data/fixedExpenseSuggestions';
 import { FixedExpenseWithRelations } from '@/types';
-import { BottomSheet } from '@/components/ui/BottomSheet';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { FixedExpenseCard } from '@/components/fixed/FixedExpenseCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, ImagePlus, X, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Calendar, Tag, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'w-9 h-[22px] rounded-full relative transition-colors flex-shrink-0 focus:outline-none disabled:opacity-50',
-        on ? 'bg-accent' : 'bg-text3/30'
-      )}
-    >
-      <span
-        className={cn(
-          'absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-all',
-          on ? 'left-[16px]' : 'left-[2px]'
-        )}
-      />
-    </button>
-  );
-}
 
 export default function FixedExpensesPage() {
   const { fixedExpenses, isLoading, refetch, totalActiveAmount } = useFixedExpenses();
@@ -54,34 +32,26 @@ export default function FixedExpensesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // Logo & brand color state
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [brandColor, setBrandColor] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Suggestions
-  const [suggestions, setSuggestions] = useState<ExpenseSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
   const {
     register,
     handleSubmit,
     control,
     reset,
-    setValue,
     formState: { errors },
   } = useForm<FixedExpenseFormData>({
     resolver: zodResolver(fixedExpenseSchema),
-    defaultValues: { name: '', amount: 0, currency_id: '', category_id: null, billing_day: null, notes: null },
+    defaultValues: {
+      name: '',
+      amount: 0,
+      currency_id: '',
+      category_id: null,
+      billing_day: null,
+      notes: null,
+    },
   });
 
   const openCreateModal = () => {
     setEditingExpense(null);
-    setLogoUrl(null);
-    setBrandColor(null);
-    setSuggestions([]);
-    setShowSuggestions(false);
     reset({
       name: '',
       amount: 0,
@@ -95,10 +65,6 @@ export default function FixedExpensesPage() {
 
   const openEditModal = (expense: FixedExpenseWithRelations) => {
     setEditingExpense(expense);
-    setLogoUrl(expense.logo_url ?? null);
-    setBrandColor(expense.brand_color ?? null);
-    setSuggestions([]);
-    setShowSuggestions(false);
     reset({
       name: expense.name,
       amount: expense.amount,
@@ -110,86 +76,47 @@ export default function FixedExpensesPage() {
     setShowModal(true);
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val.length >= 1) {
-      const filtered = EXPENSE_SUGGESTIONS.filter((s) =>
-        s.name.toLowerCase().includes(val.toLowerCase())
-      ).slice(0, 5);
-      setSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setShowSuggestions(false);
-    }
-  };
-
-  const selectSuggestion = (suggestion: ExpenseSuggestion) => {
-    setValue('name', suggestion.name);
-    setBrandColor(suggestion.brandColor);
-    if (suggestion.logoUrl) setLogoUrl(suggestion.logoUrl);
-    setShowSuggestions(false);
-    setSuggestions([]);
-  };
-
-  const handleLogoUpload = async (file: File) => {
-    setIsUploading(true);
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const ext = file.name.split('.').pop() || 'png';
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage.from('logos').upload(path, file);
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      setLogoUrl(publicUrl);
-
-      const color = await extractDominantColor(publicUrl);
-      setBrandColor(color);
-    } catch {
-      toast.error('Error al subir logo');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const removeLogo = () => {
-    setLogoUrl(null);
-  };
-
   const onSubmit = async (data: FixedExpenseFormData) => {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error('No estás autenticado'); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const payload = {
-        name: data.name,
-        amount: data.amount,
-        currency_id: data.currency_id,
-        category_id: data.category_id || null,
-        billing_day: data.billing_day,
-        notes: data.notes,
-        logo_url: logoUrl,
-        brand_color: brandColor,
-      };
+      if (!user) {
+        toast.error('No estás autenticado');
+        return;
+      }
 
       if (editingExpense) {
         const { error } = await supabase
           .from('fixed_expenses')
-          .update({ ...payload, last_updated: new Date().toISOString() })
+          .update({
+            name: data.name,
+            amount: data.amount,
+            currency_id: data.currency_id,
+            category_id: data.category_id || null,
+            billing_day: data.billing_day,
+            notes: data.notes,
+            last_updated: new Date().toISOString(),
+          })
           .eq('id', editingExpense.id);
+
         if (error) throw error;
         toast.success('Gasto fijo actualizado');
       } else {
-        const { error } = await supabase
-          .from('fixed_expenses')
-          .insert({ ...payload, user_id: user.id, is_active: true });
+        const { error } = await supabase.from('fixed_expenses').insert({
+          user_id: user.id,
+          name: data.name,
+          amount: data.amount,
+          currency_id: data.currency_id,
+          category_id: data.category_id || null,
+          billing_day: data.billing_day,
+          notes: data.notes,
+          is_active: true,
+        });
+
         if (error) throw error;
         toast.success('Gasto fijo creado');
       }
@@ -211,8 +138,9 @@ export default function FixedExpensesPage() {
         .from('fixed_expenses')
         .update({ is_active: !expense.is_active })
         .eq('id', expense.id);
+
       if (error) throw error;
-      toast.success(expense.is_active ? 'Desactivado' : 'Activado');
+      toast.success(expense.is_active ? 'Gasto fijo desactivado' : 'Gasto fijo activado');
       refetch();
     } catch {
       toast.error('Error al cambiar estado');
@@ -226,283 +154,184 @@ export default function FixedExpensesPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-[88px] rounded-[18px] bg-bg-input" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {[1, 2, 3].map((i) => (<div key={i} className="h-[164px] rounded-[18px] bg-bg-input" />))}
+      <div className="space-y-6">
+        <div className="h-24 bg-zinc-900 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-40 bg-zinc-900 rounded-xl animate-pulse" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto lg:max-w-none space-y-5">
-      <PageHeader
-        title="Gastos Fijos"
-        subtitle="Suscripciones y recurrentes"
-        action={
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-[12px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90"
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            Nuevo
-          </button>
-        }
-      />
-
-      {/* Summary banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between rounded-[18px] px-5 py-4 bg-accent/8 border border-accent/15"
-      >
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-[12px] font-medium uppercase tracking-[0.5px] text-accent/70 mb-1">
-            Total mensual activo
-          </p>
-          <p className="font-numeric text-[26px] font-extrabold text-accent tracking-tight">
-            {formatCurrency(totalActiveAmount, currencies[0]?.code || 'PEN')}
-          </p>
-          <p className="text-[12px] text-accent/50 mt-0.5">
-            {activeExpenses.length} gasto{activeExpenses.length !== 1 ? 's' : ''} activo{activeExpenses.length !== 1 ? 's' : ''}
-          </p>
+          <h1 className="text-3xl font-serif font-bold text-white mb-2">Gastos Fijos</h1>
+          <p className="text-zinc-400">Gestiona tus gastos recurrentes mensuales</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-accent/8 flex items-center justify-center flex-shrink-0">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4 13l4-4 3 3 5-7" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-black font-medium rounded-lg hover:bg-amber-400 transition-colors"
+        >
+          <Plus size={20} />
+          Nuevo
+        </button>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-amber-900/40 to-amber-950/40 border border-amber-800/50 rounded-xl p-6"
+      >
+        <p className="text-zinc-400 text-sm mb-1">Total de gastos fijos activos al mes</p>
+        <p className="text-3xl font-serif font-bold text-white">
+          {formatCurrency(totalActiveAmount, 'PEN')}
+        </p>
+        <p className="text-zinc-500 text-sm mt-2">
+          {activeExpenses.length} gasto{activeExpenses.length !== 1 ? 's' : ''} activo
+          {activeExpenses.length !== 1 ? 's' : ''}
+        </p>
       </motion.div>
 
-      {/* Empty state */}
-      {fixedExpenses.length === 0 && (
-        <div className="text-center py-16 rounded-[20px] bg-bg-input/40 border border-border">
-          <p className="text-text3 text-sm mb-3">Sin gastos fijos aún</p>
-          <button onClick={openCreateModal} className="text-accent text-sm font-medium">
-            Agregar primero
+      {activeExpenses.length === 0 && inactiveExpenses.length === 0 ? (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <p className="text-zinc-500">No tienes gastos fijos registrados</p>
+          <button
+            onClick={openCreateModal}
+            className="mt-4 text-amber-500 hover:text-amber-400 font-medium"
+          >
+            Crear primer gasto fijo
           </button>
         </div>
-      )}
-
-      {/* Active */}
-      {activeExpenses.length > 0 && (
+      ) : (
         <>
-          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px]">Activos</p>
-          <AnimatePresence>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {activeExpenses.map((expense, index) => (
-                <FixedExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  index={index}
-                  onEdit={() => openEditModal(expense)}
-                  onToggle={() => toggleActive(expense)}
-                  isToggling={togglingId === expense.id}
-                />
-              ))}
+          {activeExpenses.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <AnimatePresence>
+                {activeExpenses.map((expense, index) => (
+                  <FixedExpenseCard
+                    key={expense.id}
+                    expense={expense}
+                    index={index}
+                    onEdit={() => openEditModal(expense)}
+                    onToggle={() => toggleActive(expense)}
+                    isToggling={togglingId === expense.id}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
-          </AnimatePresence>
+          )}
+
+          {inactiveExpenses.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-lg font-medium text-zinc-400 mb-4">Inactivos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence>
+                  {inactiveExpenses.map((expense, index) => (
+                    <FixedExpenseCard
+                      key={expense.id}
+                      expense={expense}
+                      index={index}
+                      onEdit={() => openEditModal(expense)}
+                      onToggle={() => toggleActive(expense)}
+                      isToggling={togglingId === expense.id}
+                      inactive
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
         </>
       )}
 
-      {/* Inactive */}
-      {inactiveExpenses.length > 0 && (
-        <>
-          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px] mt-2">Inactivos</p>
-          <AnimatePresence>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {inactiveExpenses.map((expense, index) => (
-                <FixedExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  index={index}
-                  onEdit={() => openEditModal(expense)}
-                  onToggle={() => toggleActive(expense)}
-                  isToggling={togglingId === expense.id}
-                  inactive
-                />
-              ))}
-            </div>
-          </AnimatePresence>
-        </>
-      )}
-
-      {/* BottomSheet */}
-      <BottomSheet
+      <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingExpense ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input
+            label="Nombre"
+            placeholder="Netflix, Luz, Spotify..."
+            error={errors.name?.message}
+            {...register('name')}
+          />
 
-          {/* Logo upload */}
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
-              Logo (opcional)
-            </label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className={cn(
-                  'w-[56px] h-[56px] rounded-[14px] flex items-center justify-center border-2 border-dashed transition-colors flex-shrink-0',
-                  logoUrl
-                    ? 'border-transparent overflow-hidden p-0'
-                    : 'border-border hover:border-border-focus bg-bg-input/50'
-                )}
-              >
-                {isUploading ? (
-                  <Loader2 size={20} className="text-text3 animate-spin" />
-                ) : logoUrl ? (
-                  <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
-                ) : (
-                  <ImagePlus size={20} className="text-text3" />
-                )}
-              </button>
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                label="Monto"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                error={errors.amount?.message}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
+            )}
+          />
 
-              <div className="flex-1 min-w-0">
-                {logoUrl ? (
-                  <div className="flex items-center gap-2">
-                    {brandColor && (
-                      <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: brandColor }} />
-                    )}
-                    <span className="text-[13px] text-text2 truncate">Logo subido</span>
-                    <button type="button" onClick={removeLogo} className="text-text3 hover:text-[#FF6B6B] transition-colors flex-shrink-0">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-[13px] text-text3">
-                    Sube el logo para personalizar el card
-                  </p>
-                )}
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleLogoUpload(file);
-                e.target.value = '';
-              }}
-            />
-          </div>
+          <Select label="Moneda" error={errors.currency_id?.message} {...register('currency_id')}>
+            <option value="">Selecciona una moneda</option>
+            {currencies.map((currency) => (
+              <option key={currency.id} value={currency.id}>
+                {currency.symbol} - {currency.name}
+              </option>
+            ))}
+          </Select>
 
-          {/* Name with suggestions */}
-          <div className="relative">
-            <Input
-              label="Nombre"
-              placeholder="Netflix, Luz, Spotify..."
-              error={errors.name?.message}
-              {...register('name', { onChange: handleNameChange })}
-              autoComplete="off"
-            />
-            <AnimatePresence>
-              {showSuggestions && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className="absolute left-0 right-0 top-full mt-1 z-50 rounded-[14px] bg-bg border border-border shadow-xl overflow-hidden"
-                >
-                  {suggestions.map((s) => (
-                    <button
-                      key={s.name}
-                      type="button"
-                      onClick={() => selectSuggestion(s)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-bg-input/60 transition-colors text-left"
-                    >
-                      {s.logoUrl ? (
-                        <img
-                          src={s.logoUrl}
-                          alt={s.name}
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          className="w-6 h-6 rounded-[6px] object-contain flex-shrink-0 bg-white"
-                        />
-                      ) : (
-                        <div
-                          className="w-6 h-6 rounded-[6px] flex items-center justify-center text-[13px] flex-shrink-0"
-                          style={{ backgroundColor: s.brandColor + '22' }}
-                        >
-                          {s.emoji}
-                        </div>
-                      )}
-                      <span className="text-[14px] text-text1">{s.name}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <Select label="Categoría (opcional)" {...register('category_id')}>
+            <option value="">Sin categoría</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </Select>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Controller
-              name="amount"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  label="Monto"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  error={errors.amount?.message}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                />
-              )}
-            />
-            <Select label="Moneda" error={errors.currency_id?.message} {...register('currency_id')}>
-              <option value="">Selecciona</option>
-              {currencies.map((c) => (
-                <option key={c.id} value={c.id}>{c.symbol} - {c.name}</option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Controller
-              name="billing_day"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  label="Día de cobro (1-31)"
-                  type="number"
-                  min={1}
-                  max={31}
-                  placeholder="15"
-                  value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                />
-              )}
-            />
-            <Select label="Categoría (opcional)" {...register('category_id')}>
-              <option value="">Sin categoría</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </Select>
-          </div>
+          <Controller
+            name="billing_day"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                label="Día de cobro (1-31)"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="15"
+                value={field.value ?? ''}
+                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+              />
+            )}
+          />
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-1.5">
+            <label htmlFor="notes" className="block text-sm font-medium text-zinc-300 mb-1.5">
               Notas (opcional)
             </label>
             <textarea
+              id="notes"
               rows={2}
-              className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus text-[15px] transition-colors"
+              className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               placeholder="Notas adicionales..."
               {...register('notes')}
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowModal(false)}>
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setShowModal(false)}
+            >
               Cancelar
             </Button>
             <Button type="submit" variant="primary" className="flex-1" isLoading={isSubmitting}>
@@ -510,7 +339,95 @@ export default function FixedExpensesPage() {
             </Button>
           </div>
         </form>
-      </BottomSheet>
+      </Modal>
     </div>
+  );
+}
+
+function FixedExpenseCard({
+  expense,
+  index,
+  onEdit,
+  onToggle,
+  isToggling,
+  inactive,
+}: {
+  expense: FixedExpenseWithRelations;
+  index: number;
+  onEdit: () => void;
+  onToggle: () => void;
+  isToggling: boolean;
+  inactive?: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ delay: index * 0.05 }}
+      className={cn(
+        'bg-zinc-900 border rounded-xl p-5 transition-all',
+        inactive ? 'border-zinc-800 opacity-60' : 'border-zinc-800 hover:border-zinc-700'
+      )}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <h3 className={cn('font-semibold text-lg', inactive ? 'text-zinc-500' : 'text-white')}>
+          {expense.name}
+        </h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onEdit}
+            className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button
+            onClick={onToggle}
+            disabled={isToggling}
+            className={cn(
+              'p-1.5 rounded-lg transition-colors',
+              expense.is_active
+                ? 'text-green-500 hover:bg-green-500/10'
+                : 'text-zinc-500 hover:bg-zinc-800'
+            )}
+          >
+            {expense.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+          </button>
+        </div>
+      </div>
+
+      <p
+        className={cn(
+          'text-2xl font-serif font-bold mb-3',
+          inactive ? 'text-zinc-500' : 'text-white'
+        )}
+      >
+        {formatCurrency(expense.amount, expense.currencies?.code || 'PEN')}
+      </p>
+
+      <div className="space-y-2 text-sm">
+        {expense.billing_day && (
+          <div className="flex items-center gap-2 text-zinc-400">
+            <Calendar size={14} />
+            <span>Se cobra el día {expense.billing_day} de cada mes</span>
+          </div>
+        )}
+        {expense.categories && (
+          <div className="flex items-center gap-2 text-zinc-400">
+            <Tag size={14} />
+            <span
+              className="px-2 py-0.5 rounded text-xs"
+              style={{
+                backgroundColor: (expense.categories.color || '#52525b') + '20',
+                color: expense.categories.color || '#a1a1aa',
+              }}
+            >
+              {expense.categories.name}
+            </span>
+          </div>
+        )}
+        {expense.notes && <p className="text-zinc-500 text-xs mt-2">{expense.notes}</p>}
+      </div>
+    </motion.div>
   );
 }

@@ -62,12 +62,12 @@ function getDateRange(period: Period, customStart?: string, customEnd?: string) 
   return getMonthDateRange();
 }
 
-const CurrencyTooltip = ({ active, payload, label }: any) => {
+const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-bg border border-border rounded-[12px] p-3 shadow-xl">
-      <p className="text-text3 text-xs mb-2">{label}</p>
-      {payload.map((entry: any) => (
+    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
+      <p className="text-zinc-400 text-xs mb-2">{label}</p>
+      {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }} className="text-sm font-medium">
           {entry.name}: {formatCurrency(entry.value, 'PEN')}
         </p>
@@ -190,17 +190,16 @@ export default function ReportsPage() {
     }
   }, [expenses, trendCategories, start, end]);
 
-  // D. Top tags
+  // D. Top subcategories
   const subcategoryData = useMemo(() => {
     const map: Record<string, { name: string; category: string; total: number }> = {};
     expenses.forEach((t) => {
-      (t.transaction_tags || []).forEach(({ subcategories: sub }) => {
-        if (!sub) return;
-        if (!map[sub.id]) {
-          map[sub.id] = { name: sub.name, category: t.categories?.name || '—', total: 0 };
-        }
-        map[sub.id].total += t.amount;
-      });
+      const sub = t.subcategories;
+      if (!sub) return;
+      if (!map[sub.id]) {
+        map[sub.id] = { name: sub.name, category: t.categories?.name || '—', total: 0 };
+      }
+      map[sub.id].total += t.amount;
     });
     return Object.values(map)
       .sort((a, b) => b.total - a.total)
@@ -238,20 +237,20 @@ export default function ReportsPage() {
   const toggleLine = (key: string) => {
     setHiddenLines((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) { next.delete(key); } else { next.add(key); }
       return next;
     });
   };
 
-  const DonutTooltip = ({ active, payload }: any) => {
+  const DonutTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[] }) => {
     if (!active || !payload?.length) return null;
     const entry = payload[0];
     const pct = totalExpenses > 0 ? ((entry.value / totalExpenses) * 100).toFixed(1) : '0';
     return (
-      <div className="bg-bg border border-border rounded-[12px] p-3 shadow-xl">
-        <p className="text-text1 text-[13px] font-medium">{entry.name}</p>
-        <p className="text-text2 text-[13px]">{formatCurrency(entry.value, 'PEN')}</p>
-        <p className="text-text3 text-xs">{pct}% del total</p>
+      <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
+        <p className="text-white text-sm font-medium">{entry.name}</p>
+        <p className="text-zinc-300 text-sm">{formatCurrency(entry.value, 'PEN')}</p>
+        <p className="text-zinc-500 text-xs">{pct}% del total</p>
       </div>
     );
   };
@@ -259,10 +258,10 @@ export default function ReportsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-bg-input rounded-lg animate-pulse w-48" />
-        <div className="h-10 bg-bg-input rounded-lg animate-pulse w-96" />
+        <div className="h-8 bg-zinc-900 rounded-lg animate-pulse w-48" />
+        <div className="h-10 bg-zinc-900 rounded-lg animate-pulse w-96" />
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-72 bg-bg-input rounded-xl animate-pulse" />
+          <div key={i} className="h-72 bg-zinc-900 rounded-xl animate-pulse" />
         ))}
       </div>
     );
@@ -271,8 +270,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-[17px] font-semibold text-text1">Reportes</h1>
-        <p className="text-text3">Visualización de gastos e ingresos por período</p>
+        <h1 className="text-3xl font-serif font-bold text-white mb-2">Reportes</h1>
+        <p className="text-zinc-400">Visualización de gastos e ingresos por período</p>
       </div>
 
       {/* Period selector */}
@@ -284,8 +283,8 @@ export default function ReportsPage() {
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
               period === p
-                ? 'bg-accent/15 text-accent'
-                : 'bg-bg-input/60 text-text3 hover:bg-bg-input'
+                ? 'bg-amber-500 text-black'
+                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
             )}
           >
             {PERIOD_LABELS[p]}
@@ -297,14 +296,14 @@ export default function ReportsPage() {
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="px-3 py-2 bg-bg-input border border-border rounded-[10px] text-[13px] text-text1"
+              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white"
             />
-            <span className="text-text3">—</span>
+            <span className="text-zinc-500">—</span>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="px-3 py-2 bg-bg-input border border-border rounded-[10px] text-[13px] text-text1"
+              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white"
             />
           </div>
         )}
@@ -312,25 +311,25 @@ export default function ReportsPage() {
 
       {/* E. Fixed vs Variable */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-          <p className="text-text3 text-sm mb-1">Gastos fijos</p>
-          <p className="text-[20px] font-semibold tabular-nums text-text1">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <p className="text-zinc-400 text-sm mb-1">Gastos fijos</p>
+          <p className="text-2xl font-serif font-bold text-white">
             {formatCurrency(fixedTotal, 'PEN')}
           </p>
         </div>
-        <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-          <p className="text-text3 text-sm mb-1">Gastos variables</p>
-          <p className="text-[20px] font-semibold tabular-nums text-text1">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <p className="text-zinc-400 text-sm mb-1">Gastos variables</p>
+          <p className="text-2xl font-serif font-bold text-white">
             {formatCurrency(variableTotal, 'PEN')}
           </p>
         </div>
       </div>
 
       {/* A. Monthly Balance Bar Chart */}
-      <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-        <h2 className="text-[15px] font-semibold text-text1 mb-4">Balance mensual</h2>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-6">Balance mensual</h2>
         {monthlyData.length === 0 ? (
-          <p className="text-text3 text-center py-12">Sin datos para el período</p>
+          <p className="text-zinc-500 text-center py-12">Sin datos para el período</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -366,10 +365,10 @@ export default function ReportsPage() {
       {/* B. Donut + C. Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* B. Category Donut */}
-        <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-          <h2 className="text-[15px] font-semibold text-text1 mb-4">Gastos por categoría</h2>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Gastos por categoría</h2>
           {categoryDonutData.length === 0 ? (
-            <p className="text-text3 text-center py-12">Sin gastos en el período</p>
+            <p className="text-zinc-500 text-center py-12">Sin gastos en el período</p>
           ) : (
             <>
               <div className="relative">
@@ -393,8 +392,8 @@ export default function ReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xs text-text3">Total</p>
-                  <p className="text-[14px] font-semibold text-text1">
+                  <p className="text-xs text-zinc-500">Total</p>
+                  <p className="text-base font-bold text-white">
                     {formatCurrency(totalExpenses, 'PEN')}
                   </p>
                 </div>
@@ -406,7 +405,7 @@ export default function ReportsPage() {
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: entry.color }}
                     />
-                    <span className="text-xs text-text3">{entry.name}</span>
+                    <span className="text-xs text-zinc-400">{entry.name}</span>
                   </div>
                 ))}
               </div>
@@ -415,10 +414,10 @@ export default function ReportsPage() {
         </div>
 
         {/* C. Category Trend Line Chart */}
-        <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-          <h2 className="text-[15px] font-semibold text-text1 mb-4">Tendencia por categoría</h2>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Tendencia por categoría</h2>
           {trendCategories.length === 0 ? (
-            <p className="text-text3 text-center py-12">Sin gastos en el período</p>
+            <p className="text-zinc-500 text-center py-12">Sin gastos en el período</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={240}>
@@ -465,7 +464,7 @@ export default function ReportsPage() {
                       className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: categoryColors[name] }}
                     />
-                    <span className="text-text3">{name}</span>
+                    <span className="text-zinc-400">{name}</span>
                   </button>
                 ))}
               </div>
@@ -475,19 +474,19 @@ export default function ReportsPage() {
       </div>
 
       {/* D. Top Subcategories Table */}
-      <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-        <h2 className="text-[15px] font-semibold text-text1 mb-4">Top subcategorías</h2>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-6">Top subcategorías</h2>
         {subcategoryData.length === 0 ? (
-          <p className="text-text3 text-center py-8">Sin subcategorías en el período</p>
+          <p className="text-zinc-500 text-center py-8">Sin subcategorías en el período</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="pb-3 text-left text-text3 font-medium">Subcategoría</th>
-                  <th className="pb-3 text-left text-text3 font-medium">Categoría</th>
-                  <th className="pb-3 text-right text-text3 font-medium">Total</th>
-                  <th className="pb-3 text-right text-text3 font-medium">% del total</th>
+                <tr className="border-b border-zinc-800">
+                  <th className="pb-3 text-left text-zinc-500 font-medium">Subcategoría</th>
+                  <th className="pb-3 text-left text-zinc-500 font-medium">Categoría</th>
+                  <th className="pb-3 text-right text-zinc-500 font-medium">Total</th>
+                  <th className="pb-3 text-right text-zinc-500 font-medium">% del total</th>
                 </tr>
               </thead>
               <tbody>
@@ -495,23 +494,23 @@ export default function ReportsPage() {
                   <tr
                     key={row.name}
                     className={cn(
-                      'border-b border-border/50',
+                      'border-b border-zinc-800/50',
                       row.pct > 20 && 'bg-amber-500/5'
                     )}
                   >
-                    <td className="py-3 text-text1 font-medium">
+                    <td className="py-3 text-white font-medium">
                       {row.name}
                       {row.pct > 20 && <span className="ml-2 text-amber-500 text-xs">▲</span>}
                     </td>
-                    <td className="py-3 text-text3">{row.category}</td>
-                    <td className="py-3 text-right text-text1">
+                    <td className="py-3 text-zinc-400">{row.category}</td>
+                    <td className="py-3 text-right text-white">
                       {formatCurrency(row.total, 'PEN')}
                     </td>
                     <td className="py-3 text-right">
                       <span
                         className={cn(
                           'font-medium',
-                          row.pct > 20 ? 'text-amber-500' : 'text-text3'
+                          row.pct > 20 ? 'text-amber-500' : 'text-zinc-400'
                         )}
                       >
                         {row.pct.toFixed(1)}%
@@ -527,18 +526,18 @@ export default function ReportsPage() {
 
       {/* Budget progress bars */}
       {budgetCategories.length > 0 && (
-        <div className="bg-bg-input/50 border border-border rounded-[20px] p-5">
-          <h2 className="text-[15px] font-semibold text-text1 mb-4">Progreso de presupuesto</h2>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Progreso de presupuesto</h2>
           <div className="space-y-5">
             {budgetCategories.map((cat) => (
               <div key={cat.id}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-text2">{cat.name}</span>
-                  <span className="text-sm text-text3">
+                  <span className="text-sm text-zinc-300">{cat.name}</span>
+                  <span className="text-sm text-zinc-500">
                     {formatCurrency(cat.spent, 'PEN')} / {formatCurrency(cat.budget_limit!, 'PEN')}
                   </span>
                 </div>
-                <div className="h-2 bg-bg-input rounded-full overflow-hidden">
+                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',

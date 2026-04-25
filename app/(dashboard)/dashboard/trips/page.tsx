@@ -181,7 +181,7 @@ export default function TripsPage() {
       </div>
 
       {/* Active trips */}
-      <p className="font-display text-[13px] font-bold text-text3 tracking-[0.4px] mb-3">Activos</p>
+      <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px] mb-3">Activos</p>
       <div className="flex flex-col gap-3.5 mb-6">
         {MOCK_ACTIVE.map((t) => (
           <TripCardLarge
@@ -199,7 +199,7 @@ export default function TripsPage() {
 
       {/* Completed trips */}
       <div className="flex items-center justify-between mb-3">
-        <p className="font-display text-[13px] font-bold text-text3 tracking-[0.4px]">Completados</p>
+        <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px]">Completados</p>
         <Link href="/dashboard/trips/completed" className="text-[12px] text-accent">
           Ver todos
         </Link>

@@ -288,7 +288,7 @@ export default function FixedExpensesPage() {
       {/* Active */}
       {activeExpenses.length > 0 && (
         <>
-          <p className="font-display text-[13px] font-bold text-text3 tracking-[0.4px]">Activos</p>
+          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px]">Activos</p>
           <AnimatePresence>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {activeExpenses.map((expense, index) => (
@@ -309,7 +309,7 @@ export default function FixedExpensesPage() {
       {/* Inactive */}
       {inactiveExpenses.length > 0 && (
         <>
-          <p className="font-display text-[13px] font-bold text-text3 tracking-[0.4px] mt-2">Inactivos</p>
+          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px] mt-2">Inactivos</p>
           <AnimatePresence>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {inactiveExpenses.map((expense, index) => (

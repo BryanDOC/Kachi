@@ -33,7 +33,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           trips(*)
         `
         )
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (options.startDate) {
         query = query.gte('date', options.startDate);

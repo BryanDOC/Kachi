@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTransactions } from '@/lib/hooks/useTransactions';
+import { useUI } from '@/lib/context/ui-context';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { formatCurrency } from '@/lib/utils/currency';
 import { getMonthDateRange, getQuarterDateRange, getYearDateRange } from '@/lib/utils/date';
@@ -77,6 +78,7 @@ const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload
 };
 
 export default function ReportsPage() {
+  const { txVersion } = useUI();
   const [period, setPeriod] = useState<Period>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -87,7 +89,7 @@ export default function ReportsPage() {
     [period, customStart, customEnd]
   );
 
-  const { transactions, isLoading } = useTransactions({ startDate: start, endDate: end });
+  const { transactions, isLoading } = useTransactions({ startDate: start, endDate: end, version: txVersion });
   const { categories } = useCategories();
 
   const expenses = useMemo(() => transactions.filter((t) => t.type === 'expense'), [transactions]);

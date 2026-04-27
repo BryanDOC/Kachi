@@ -100,7 +100,7 @@ interface TripTransaction {
   currencies?: { code: string; symbol: string } | null;
 }
 
-export function useTripTransactions(tripId: string) {
+export function useTripTransactions(tripId: string, version?: number) {
   const [transactions, setTransactions] = useState<TripTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -126,7 +126,8 @@ export function useTripTransactions(tripId: string) {
         `
         )
         .eq('trip_id', tripId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
 
@@ -141,7 +142,8 @@ export function useTripTransactions(tripId: string) {
 
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchTransactions, version]);
 
   const totalSpent = transactions
     .filter((t) => t.type === 'expense')

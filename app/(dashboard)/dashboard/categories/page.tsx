@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Check, X, Search, Package } from 'lucide-react';
 import { Category, Subcategory } from '@/types';
-import { CategoryIcon, CATEGORY_ICONS } from '@/components/ui/CategoryIcon';
+import { CategoryIcon, CATEGORY_ICONS, getSuggestedIcons } from '@/components/ui/CategoryIcon';
 
 
 interface CatFormState {
@@ -149,6 +149,14 @@ export default function CategoriesPage() {
   };
 
   const deleteTag = async (id: string, name: string) => {
+    const { count } = await supabase
+      .from('transaction_tags')
+      .select('*', { count: 'exact', head: true })
+      .eq('subcategory_id', id);
+    if (count && count > 0) {
+      toast.error(`"${name}" está en ${count} transacción${count !== 1 ? 'es' : ''} y no se puede eliminar`);
+      return;
+    }
     const { error } = await supabase.from('subcategories').delete().eq('id', id);
     if (error) toast.error('Error al eliminar tag');
     else { toast.success(`"${name}" eliminado`); fetchCategories(); }
@@ -371,28 +379,66 @@ export default function CategoriesPage() {
             <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
               Ícono
             </label>
-            <div className="grid grid-cols-8 gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {Object.keys(CATEGORY_ICONS).map((iconName) => {
-                const Icon = CATEGORY_ICONS[iconName];
-                const selected = form.icon === iconName;
-                return (
-                  <button
-                    key={iconName}
-                    onClick={() => setForm((f) => ({ ...f, icon: iconName }))}
-                    title={iconName}
-                    className={cn(
-                      'w-9 h-9 rounded-[12px] flex items-center justify-center transition-colors border',
-                      selected
-                        ? 'text-white dark:text-[#1A1A2E] border-transparent'
-                        : 'bg-bg-input text-text3 border-transparent hover:text-text1 hover:border-border'
-                    )}
-                    style={selected ? { background: 'var(--card-bg)' } : undefined}
-                  >
-                    <Icon size={16} />
-                  </button>
-                );
-              })}
-            </div>
+            {(() => {
+              const suggested = getSuggestedIcons(form.name);
+              const allIcons = Object.keys(CATEGORY_ICONS);
+              return (
+                <div className="max-h-52 overflow-y-auto pr-1 space-y-2">
+                  {suggested.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-accent mb-1.5">Sugeridos</p>
+                      <div className="grid grid-cols-8 gap-1.5">
+                        {suggested.map((iconName) => {
+                          const Icon = CATEGORY_ICONS[iconName];
+                          const selected = form.icon === iconName;
+                          return (
+                            <button
+                              key={`sug-${iconName}`}
+                              onClick={() => setForm((f) => ({ ...f, icon: iconName }))}
+                              title={iconName}
+                              className={cn(
+                                'w-9 h-9 rounded-[12px] flex items-center justify-center transition-colors border',
+                                selected
+                                  ? 'text-white dark:text-[#1A1A2E] border-transparent'
+                                  : 'bg-accent/10 text-accent border-transparent hover:bg-accent/20'
+                              )}
+                              style={selected ? { background: 'var(--card-bg)' } : undefined}
+                            >
+                              <Icon size={16} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="border-t border-border mt-2 pt-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-text3 mb-1.5">Todos</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-8 gap-1.5">
+                    {allIcons.map((iconName) => {
+                      const Icon = CATEGORY_ICONS[iconName];
+                      const selected = form.icon === iconName;
+                      return (
+                        <button
+                          key={iconName}
+                          onClick={() => setForm((f) => ({ ...f, icon: iconName }))}
+                          title={iconName}
+                          className={cn(
+                            'w-9 h-9 rounded-[12px] flex items-center justify-center transition-colors border',
+                            selected
+                              ? 'text-white dark:text-[#1A1A2E] border-transparent'
+                              : 'bg-bg-input text-text3 border-transparent hover:text-text1 hover:border-border'
+                          )}
+                          style={selected ? { background: 'var(--card-bg)' } : undefined}
+                        >
+                          <Icon size={16} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Preview */}

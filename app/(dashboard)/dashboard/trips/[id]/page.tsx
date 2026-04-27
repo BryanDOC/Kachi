@@ -37,9 +37,9 @@ function formatTripDates(start: string | null, end: string | null): string {
 
 export default function TripDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { openTxSheet } = useUI();
+  const { openTxSheet, txVersion } = useUI();
   const { trip, isLoading: tripLoading } = useTrip(id);
-  const { transactions, totalSpent, byCategory, isLoading: txLoading } = useTripTransactions(id);
+  const { transactions, totalSpent, byCategory, isLoading: txLoading } = useTripTransactions(id, txVersion);
 
   const isLoading = tripLoading || txLoading;
   const pieData = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));

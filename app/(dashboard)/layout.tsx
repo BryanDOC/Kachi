@@ -10,6 +10,14 @@ import { NewTransactionSheet } from '@/components/layout/NewTransactionSheet';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <UIProvider>
+      <svg width="0" height="0" style={{ position: 'absolute', overflow: 'hidden' }}>
+        <defs>
+          <linearGradient id="icon-card-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="var(--icon-grad-start)" />
+            <stop offset="100%" stopColor="var(--icon-grad-end)" />
+          </linearGradient>
+        </defs>
+      </svg>
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
         <BudgetAlertsProvider>

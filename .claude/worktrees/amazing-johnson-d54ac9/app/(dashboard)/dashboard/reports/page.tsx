@@ -62,12 +62,12 @@ function getDateRange(period: Period, customStart?: string, customEnd?: string) 
   return getMonthDateRange();
 }
 
-const CurrencyTooltip = ({ active, payload, label }: any) => {
+const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
       <p className="text-zinc-400 text-xs mb-2">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }} className="text-sm font-medium">
           {entry.name}: {formatCurrency(entry.value, 'PEN')}
         </p>
@@ -141,7 +141,7 @@ export default function ReportsPage() {
 
   // C. Category trend
   const trendCategories = useMemo(
-    () => [...new Set(expenses.map((t) => t.categories?.name).filter(Boolean))] as string[],
+    () => Array.from(new Set(expenses.map((t) => t.categories?.name).filter(Boolean))) as string[],
     [expenses]
   );
 
@@ -237,12 +237,12 @@ export default function ReportsPage() {
   const toggleLine = (key: string) => {
     setHiddenLines((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) { next.delete(key); } else { next.add(key); }
       return next;
     });
   };
 
-  const DonutTooltip = ({ active, payload }: any) => {
+  const DonutTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[] }) => {
     if (!active || !payload?.length) return null;
     const entry = payload[0];
     const pct = totalExpenses > 0 ? ((entry.value / totalExpenses) * 100).toFixed(1) : '0';

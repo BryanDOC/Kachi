@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -101,19 +102,19 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[17px] font-semibold text-text1">Transacciones</h1>
-          <p className="text-[12px] text-text3 mt-0.5">{filteredTransactions.length} movimientos</p>
-        </div>
-        <Link
-          href="/dashboard/transactions/new"
-          className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black text-[13px] font-semibold rounded-full transition-opacity hover:opacity-85 active:scale-[0.97]"
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          Nuevo
-        </Link>
-      </div>
+      <PageHeader
+        title="Transacciones"
+        subtitle={`${filteredTransactions.length} movimientos`}
+        action={
+          <Link
+            href="/dashboard/transactions/new"
+            className="flex items-center gap-1.5 h-9 px-4 rounded-[12px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90 active:scale-[0.97]"
+          >
+            <Plus size={13} strokeWidth={2.5} />
+            Nuevo
+          </Link>
+        }
+      />
 
       {/* Filters */}
       <div className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">

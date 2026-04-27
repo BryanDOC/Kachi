@@ -33,6 +33,7 @@ export default function FixedExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<FixedExpenseWithRelations | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showAllActive, setShowAllActive] = useState(false);
 
   // Logo & brand color state
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -220,15 +221,6 @@ export default function FixedExpensesPage() {
       <PageHeader
         title="Gastos Fijos"
         subtitle="Suscripciones y recurrentes"
-        action={
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-[12px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90"
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            Nuevo
-          </button>
-        }
       />
 
       {/* Summary banner */}
@@ -255,41 +247,45 @@ export default function FixedExpensesPage() {
         </div>
       </motion.div>
 
-      {/* Empty state */}
-      {fixedExpenses.length === 0 && (
-        <div className="text-center py-16 rounded-[20px] bg-bg-input/40 border border-border">
-          <p className="text-text3 text-sm mb-3">Sin gastos fijos aún</p>
-          <button onClick={openCreateModal} className="text-accent text-sm font-medium">
-            Agregar primero
+      {/* Active */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-[15px] font-semibold text-text1">Activos</h2>
+        {activeExpenses.length > 3 && (
+          <button
+            onClick={() => setShowAllActive((v) => !v)}
+            className="text-[13px] font-medium text-accent"
+          >
+            {showAllActive ? 'Ver menos' : 'Ver todos'}
+          </button>
+        )}
+      </div>
+      <AnimatePresence>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {(showAllActive ? activeExpenses : activeExpenses.slice(0, 3)).map((expense, index) => (
+            <FixedExpenseCard
+              key={expense.id}
+              expense={expense}
+              index={index}
+              onEdit={() => openEditModal(expense)}
+              onToggle={() => toggleActive(expense)}
+              isToggling={togglingId === expense.id}
+            />
+          ))}
+          <button
+            onClick={openCreateModal}
+            className="rounded-[18px] border-2 border-dashed border-border flex flex-col items-center justify-center gap-1.5 text-text3 hover:text-text2 hover:border-border-focus transition-colors"
+            style={{ minHeight: 164 }}
+          >
+            <Plus size={20} strokeWidth={1.5} />
+            <span className="text-[13px] font-medium">Nuevo</span>
           </button>
         </div>
-      )}
-
-      {/* Active */}
-      {activeExpenses.length > 0 && (
-        <>
-          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px]">Activos</p>
-          <AnimatePresence>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {activeExpenses.map((expense, index) => (
-                <FixedExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  index={index}
-                  onEdit={() => openEditModal(expense)}
-                  onToggle={() => toggleActive(expense)}
-                  isToggling={togglingId === expense.id}
-                />
-              ))}
-            </div>
-          </AnimatePresence>
-        </>
-      )}
+      </AnimatePresence>
 
       {/* Inactive */}
       {inactiveExpenses.length > 0 && (
         <>
-          <p className="text-[12px] font-semibold text-text3 uppercase tracking-[0.5px] mt-2">Inactivos</p>
+          <h2 className="text-[15px] font-semibold text-text1 mt-2">Inactivos</h2>
           <AnimatePresence>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {inactiveExpenses.map((expense, index) => (
@@ -475,7 +471,7 @@ export default function FixedExpensesPage() {
             </label>
             <textarea
               rows={2}
-              className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus text-[14px] transition-colors"
+              className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus text-[13px] transition-colors"
               placeholder="Notas adicionales..."
               {...register('notes')}
             />

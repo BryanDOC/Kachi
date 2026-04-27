@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import { toast } from 'sonner';
-import { Plus, Trash2, Star, User, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Star, User, AlertTriangle, LogOut } from 'lucide-react';
 import { Currency, Profile } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -170,6 +170,12 @@ export default function SettingsPage() {
     setSavingCurr(false);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
   const deleteAccount = async () => {
     if (deleteConfirmText !== 'ELIMINAR') return;
     setDeleting(true);
@@ -325,6 +331,15 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 w-full px-5 py-4 bg-bg-input/50 border border-border rounded-[20px] text-text2 hover:text-text1 hover:border-border-focus transition-colors"
+      >
+        <LogOut size={18} className="flex-shrink-0" />
+        <span className="text-[14px] font-medium">Cerrar sesión</span>
+      </button>
 
       {/* Danger zone */}
       <section className="bg-bg-input/50 border border-[rgba(255,107,107,0.25)] rounded-[20px] p-5 space-y-4">

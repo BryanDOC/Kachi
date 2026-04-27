@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :root {
   /* Light mode colors */
   --bg: #F2F2F7;
@@ -15,6 +25,8 @@
 
   /* Card gradient - Light (blue/purple tones) */
   --card-bg: linear-gradient(135deg, #1A1A2E 0%, #252545 40%, #1C3860 75%, #18283E 100%);
+  --icon-grad-start: #1A1A2E;
+  --icon-grad-end:   #1C3860;
   --card-circle-1: radial-gradient(circle, rgba(80, 160, 255, 0.20) 0%, transparent 70%);
   --card-circle-2: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
 }
@@ -33,6 +45,8 @@
 
   /* Tarjeta — blanca para contrastar con el fondo dark navy */
   --card-bg: linear-gradient(135deg, #FFFFFF 0%, #F4F6FF 40%, #EDF0FF 75%, #F8F9FF 100%);
+  --icon-grad-start: #FFFFFF;
+  --icon-grad-end:   #EDF0FF;
   --card-circle-1: radial-gradient(circle, rgba(26, 26, 46, 0.07) 0%, transparent 70%);
   --card-circle-2: radial-gradient(circle, rgba(26, 26, 46, 0.03) 0%, transparent 70%);
 }

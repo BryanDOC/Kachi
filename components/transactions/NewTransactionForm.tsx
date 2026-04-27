@@ -13,9 +13,10 @@ import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useTags } from '@/lib/hooks/useTags';
 import { useTrips } from '@/lib/hooks/useTrips';
-import { TrendingDown, TrendingUp, Plus, X } from 'lucide-react';
+import { TrendingDown, TrendingUp, Plus, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { CategoryIcon } from '@/components/ui/CategoryIcon';
 
 interface NewTransactionFormProps {
   onSuccess?: () => void;
@@ -40,6 +41,8 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [newTagValue, setNewTagValue] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const { currencies } = useCurrencies();
   const { categories } = useCategories();
@@ -66,6 +69,11 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
   useEffect(() => {
     if (tripIdFromUrl) setValue('trip_id', tripIdFromUrl);
   }, [tripIdFromUrl, setValue]);
+
+  useEffect(() => {
+    const defaultCurrency = currencies.find((c) => c.is_default);
+    if (defaultCurrency) setValue('currency_id', defaultCurrency.id);
+  }, [currencies, setValue]);
 
   const toggleTag = (id: string) => {
     setSelectedTagIds((prev) =>
@@ -205,12 +213,78 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
 
       {/* Category (expense only) */}
       {transactionType === 'expense' && (
-        <Select label="Categoría" error={errors.category_id?.message} {...register('category_id')}>
-          <option value="">Sin categoría</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
+            Categoría
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setCategoryOpen((v) => !v)}
+              className="w-full h-11 px-3.5 bg-bg-input border border-border rounded-[14px] flex items-center gap-2.5 text-left transition-colors hover:border-border-focus"
+            >
+              {selectedCategoryId ? (
+                <>
+                  <div className="w-7 h-7 rounded-[8px] border border-border flex items-center justify-center flex-shrink-0">
+                    <CategoryIcon
+                      name={categories.find((c) => c.id === selectedCategoryId)?.icon}
+                      size={14}
+                      className="text-accent"
+                    />
+                  </div>
+                  <span className="flex-1 text-[14px] text-text1 truncate">
+                    {categories.find((c) => c.id === selectedCategoryId)?.name}
+                  </span>
+                </>
+              ) : (
+                <span className="flex-1 text-[14px] text-text3">Sin categoría</span>
+              )}
+              <ChevronDown size={15} className={cn('text-text3 transition-transform flex-shrink-0', categoryOpen && 'rotate-180')} />
+            </button>
+
+            {categoryOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-bg border border-border rounded-[16px] shadow-xl overflow-hidden">
+                <div className="max-h-[220px] overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCategoryId(null); setValue('category_id', null); setCategoryOpen(false); }}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-3.5 py-2.5 transition-colors text-left',
+                      !selectedCategoryId ? 'bg-accent/8 text-accent' : 'text-text3 hover:bg-bg-input/60'
+                    )}
+                  >
+                    <div className="w-7 h-7 rounded-[8px] border border-border flex items-center justify-center flex-shrink-0">
+                      <span className="text-[11px] font-bold text-text3">—</span>
+                    </div>
+                    <span className="text-[14px]">Sin categoría</span>
+                  </button>
+                  {categories.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => { setSelectedCategoryId(c.id); setValue('category_id', c.id); setCategoryOpen(false); }}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3.5 py-2.5 transition-colors text-left',
+                        selectedCategoryId === c.id ? 'bg-accent/8 text-accent' : 'text-text1 hover:bg-bg-input/60'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-7 h-7 rounded-[8px] border flex items-center justify-center flex-shrink-0',
+                        selectedCategoryId === c.id ? 'border-accent/30' : 'border-border'
+                      )}>
+                        <CategoryIcon name={c.icon} size={14} className={selectedCategoryId === c.id ? 'text-accent' : 'text-text2'} />
+                      </div>
+                      <span className="text-[14px] truncate">{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {errors.category_id && (
+            <p className="text-[12px] text-[#FF6B6B] mt-1">{errors.category_id.message as string}</p>
+          )}
+        </div>
       )}
 
       {/* Tags / chips (expense only) */}
@@ -297,7 +371,7 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
         </label>
         <textarea
           rows={2}
-          className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus transition-colors"
+          className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-[13px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus transition-colors"
           placeholder="Notas adicionales..."
           {...register('notes')}
         />
@@ -314,10 +388,8 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
         <button
           type="submit"
           disabled={isLoading}
-          className={cn(
-            'flex-[2] h-12 rounded-[14px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50',
-            transactionType === 'expense' ? 'bg-[#FF6B6B] text-white' : 'bg-accent text-bg'
-          )}
+          className="flex-[2] h-12 rounded-[14px] font-semibold text-white dark:text-[#1A1A2E] transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{ background: 'var(--card-bg)' }}
         >
           {isLoading ? 'Creando...' : 'Crear transacción'}
         </button>

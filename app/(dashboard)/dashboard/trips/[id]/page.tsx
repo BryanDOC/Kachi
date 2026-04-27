@@ -3,30 +3,13 @@
 import { useTrip, useTripTransactions } from '@/lib/hooks/useTrips';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/date';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { useUI } from '@/lib/context/ui-context';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-
-// ── MOCK DATA — reemplazar con useTrip/useTripTransactions cuando esté listo ──
-const MOCK = {
-  name: 'Huaraz',
-  dates: '10 — 20 Abr 2026 · 10 días',
-  status: 'active' as const,
-  emoji: '🏔️',
-  gradient: 'linear-gradient(135deg, #1a3a2a, #2d6a4f, #3a8a5a)',
-  totalSpent: 'S/ 348.50',
-  movimientos: 12,
-};
-
-const MOCK_CATS = [
-  { id: '1', emoji: '🚌', name: 'Transporte', count: 4, amount: 'S/ 142.00', bg: 'rgba(96,165,250,0.12)' },
-  { id: '2', emoji: '🍽️', name: 'Alimentación', count: 5, amount: 'S/ 118.50', bg: 'rgba(61,255,192,0.10)' },
-  { id: '3', emoji: '🏨', name: 'Alojamiento', count: 2, amount: 'S/ 68.00', bg: 'rgba(252,211,77,0.10)' },
-  { id: '4', emoji: '🎒', name: 'Actividades', count: 1, amount: 'S/ 20.00', bg: 'rgba(167,139,250,0.10)' },
-];
-// ─────────────────────────────────────────────────────────────────────────────
+import { TransactionRow } from '@/components/ui/TransactionRow';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const STATUS_BADGE = {
   active: {
@@ -43,14 +26,22 @@ const STATUS_BADGE = {
   },
 };
 
+function formatTripDates(start: string | null, end: string | null): string {
+  if (!start) return 'Sin fechas definidas';
+  const s = new Date(start + 'T00:00:00');
+  if (!end) return format(s, 'MMM yyyy', { locale: es });
+  const e = new Date(end + 'T00:00:00');
+  const days = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  return `${format(s, 'd MMM', { locale: es })} — ${format(e, 'd MMM yyyy', { locale: es })} · ${days} día${days !== 1 ? 's' : ''}`;
+}
+
 export default function TripDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { openTxSheet } = useUI();
-  const { isLoading: tripLoading } = useTrip(id);
+  const { trip, isLoading: tripLoading } = useTrip(id);
   const { transactions, totalSpent, byCategory, isLoading: txLoading } = useTripTransactions(id);
 
   const isLoading = tripLoading || txLoading;
-  const badge = STATUS_BADGE[MOCK.status];
   const pieData = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
 
   if (isLoading) {
@@ -64,25 +55,29 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
     );
   }
 
+  if (!trip) {
+    return (
+      <div className="max-w-lg mx-auto lg:max-w-none py-20 text-center">
+        <p className="text-text3 text-[13px]">Viaje no encontrado</p>
+      </div>
+    );
+  }
+
+  const badge = STATUS_BADGE[trip.status];
+  const dates = formatTripDates(trip.start_date, trip.end_date);
+
   return (
     <div className="max-w-lg mx-auto lg:max-w-none space-y-5">
-      {/* Back */}
-      <Link
-        href="/dashboard/trips"
-        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-text3 hover:text-text1 transition-colors"
-      >
-        <ArrowLeft size={15} />
-        Volver a viajes
-      </Link>
-
       {/* Hero */}
       <div className="relative w-full h-[260px] rounded-[22px] overflow-hidden">
-        <div
-          className="absolute inset-0 flex items-center justify-center text-[120px]"
-          style={{ background: MOCK.gradient }}
-        >
-          {MOCK.emoji}
-        </div>
+        {trip.cover_image ? (
+          <img src={trip.cover_image} alt={trip.name} className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(135deg, #1a3a2a, #2d6a4f, #3a8a5a)' }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5">
           <span
@@ -93,23 +88,13 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           >
             {badge.label}
           </span>
-          <p className="font-sans text-[24px] font-bold text-white mb-1">
-            {MOCK.name}
-          </p>
+          <p className="font-sans text-[24px] font-bold text-white mb-1">{trip.name}</p>
           <div className="flex items-center gap-1.5 text-[12px] text-white/60">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <rect
-                x="1"
-                y="2"
-                width="11"
-                height="10"
-                rx="2"
-                stroke="rgba(255,255,255,0.6)"
-                strokeWidth="1.1"
-              />
+              <rect x="1" y="2" width="11" height="10" rx="2" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
               <path d="M1 5.5h11" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
             </svg>
-            {MOCK.dates}
+            {dates}
           </div>
         </div>
       </div>
@@ -117,14 +102,14 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2.5">
         {[
-          { val: MOCK.totalSpent, lbl: 'Gastado', accent: true },
-          { val: MOCK.movimientos.toString(), lbl: 'Movimientos', accent: false },
-          { val: MOCK_CATS.length.toString(), lbl: 'Categorías', accent: false },
+          { val: formatCurrency(totalSpent, 'PEN'), lbl: 'Gastado', accent: true },
+          { val: transactions.length.toString(), lbl: 'Movimientos', accent: false },
+          { val: byCategory.length.toString(), lbl: 'Categorías', accent: false },
         ].map(({ val, lbl, accent }) => (
           <div key={lbl} className="rounded-[16px] p-3.5 bg-bg-input/40 border border-border">
             <p
               className={cn(
-                'font-sans text-[18px] font-bold tabular-nums mb-0.5',
+                'font-sans text-[15px] font-bold tabular-nums mb-0.5 truncate',
                 accent ? 'text-accent' : 'text-text1'
               )}
             >
@@ -135,53 +120,46 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
         ))}
       </div>
 
-      {/* Category list */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-sans text-[15px] font-semibold text-text1">Por categoría</p>
-          <span className="text-[12px] text-accent cursor-pointer">Ver todo</span>
-        </div>
-        <div className="flex flex-col gap-2">
-          {MOCK_CATS.map((cat) => (
-            <div
-              key={cat.id}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-[16px] bg-bg-input/40 border border-border"
-            >
-              <div
-                className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[18px] flex-shrink-0"
-                style={{ background: cat.bg }}
-              >
-                {cat.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-text1">{cat.name}</p>
-                <p className="text-[12px] text-text3 mt-0.5">{cat.count} movimientos</p>
-              </div>
-              <p className="font-sans text-[14px] font-semibold text-text1/85 tabular-nums flex-shrink-0">
-                {cat.amount}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* PieChart — datos reales */}
+      {/* Category breakdown */}
       {byCategory.length > 0 && (
+        <div>
+          <p className="font-sans text-[15px] font-semibold text-text1 mb-3">Por categoría</p>
+          <div className="flex flex-col gap-2">
+            {byCategory.map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center gap-3 px-3.5 py-3 rounded-[16px] bg-bg-input/40 border border-border"
+              >
+                <div
+                  className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
+                  style={{ background: (cat.color || '#6366F1') + '22' }}
+                >
+                  <div className="w-3.5 h-3.5 rounded-full" style={{ background: cat.color || '#6366F1' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-medium text-text1">{cat.name}</p>
+                  <p className="text-[12px] text-text3 mt-0.5">
+                    {totalSpent > 0 ? Math.round((cat.total / totalSpent) * 100) : 0}% del total
+                  </p>
+                </div>
+                <p className="font-sans text-[14px] font-semibold text-text1/85 tabular-nums flex-shrink-0">
+                  {formatCurrency(cat.total, 'PEN')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PieChart */}
+      {byCategory.length > 1 && (
         <div className="rounded-[20px] p-5 bg-bg-input/40 border border-border">
           <p className="font-sans text-[15px] font-semibold text-text1 mb-5">Distribución</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
                     {pieData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
@@ -205,10 +183,7 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
               {byCategory.map((cat) => (
                 <div key={cat.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: cat.color }}
-                    />
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                     <span className="text-text2 text-[13px]">{cat.name}</span>
                   </div>
                   <div className="text-right">
@@ -232,7 +207,8 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           <p className="font-sans text-[15px] font-semibold text-text1">Movimientos</p>
           <button
             onClick={() => openTxSheet(id)}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-[10px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-[10px] text-white dark:text-[#1A1A2E] text-[13px] font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'var(--card-bg)' }}
           >
             <Plus size={12} strokeWidth={2.5} />
             Agregar
@@ -250,39 +226,17 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
             </button>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="-mx-5 overflow-hidden">
             {transactions.map((tx) => (
-              <div
+              <TransactionRow
                 key={tx.id}
-                className="flex items-center justify-between p-3 rounded-[14px] bg-bg-input/60"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-text1 font-medium text-[14px] truncate">{tx.description}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-text3 text-[12px]">{formatDate(tx.date)}</p>
-                    {tx.categories && (
-                      <span
-                        className="text-[11px] px-1.5 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: (tx.categories.color || '#52525b') + '20',
-                          color: tx.categories.color || '#a1a1aa',
-                        }}
-                      >
-                        {tx.categories.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p
-                  className={cn(
-                    'text-[14px] font-semibold tabular-nums flex-shrink-0 ml-3',
-                    tx.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
-                  )}
-                >
-                  {tx.type === 'income' ? '+' : '-'}
-                  {formatCurrency(tx.amount, tx.currencies?.code || 'PEN')}
-                </p>
-              </div>
+                description={tx.description}
+                date={formatDate(tx.date, 'd MMM')}
+                category={tx.categories?.name}
+                iconName={tx.categories?.icon ?? null}
+                amount={formatCurrency(tx.amount, tx.currencies?.code || 'PEN')}
+                type={tx.type as 'income' | 'expense'}
+              />
             ))}
           </div>
         )}

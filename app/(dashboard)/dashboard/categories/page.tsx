@@ -6,119 +6,17 @@ import { cn } from '@/lib/utils';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import {
-  type LucideIcon,
-  Plus,
-  Pencil,
-  Trash2,
-  Check,
-  X,
-  Search,
-  Car,
-  ShoppingCart,
-  Utensils,
-  Gamepad2,
-  Heart,
-  BookOpen,
-  Home,
-  Shirt,
-  Plane,
-  Coffee,
-  DollarSign,
-  Briefcase,
-  Music,
-  Tv,
-  Globe,
-  Package,
-  Gift,
-  Fuel,
-  Train,
-  Dumbbell,
-  GraduationCap,
-  ShoppingBag,
-  Zap,
-  Camera,
-  Laptop,
-  Wallet,
-  Receipt,
-  Stethoscope,
-  Baby,
-  Star,
-  Pizza,
-} from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Search, Package } from 'lucide-react';
 import { Category, Subcategory } from '@/types';
+import { CategoryIcon, CATEGORY_ICONS } from '@/components/ui/CategoryIcon';
 
-const COLORS = [
-  '#ef4444',
-  '#f97316',
-  '#f59e0b',
-  '#eab308',
-  '#84cc16',
-  '#22c55e',
-  '#14b8a6',
-  '#06b6d4',
-  '#3b82f6',
-  '#8b5cf6',
-  '#a855f7',
-  '#ec4899',
-];
-
-const ICONS: Record<string, LucideIcon> = {
-  Car,
-  ShoppingCart,
-  Utensils,
-  Gamepad2,
-  Heart,
-  BookOpen,
-  Home,
-  Shirt,
-  Plane,
-  Coffee,
-  DollarSign,
-  Briefcase,
-  Music,
-  Tv,
-  Globe,
-  Package,
-  Gift,
-  Fuel,
-  Train,
-  Dumbbell,
-  GraduationCap,
-  ShoppingBag,
-  Zap,
-  Camera,
-  Laptop,
-  Wallet,
-  Receipt,
-  Stethoscope,
-  Baby,
-  Star,
-  Pizza,
-};
-
-function CategoryIcon({
-  name,
-  size = 18,
-  className,
-  style,
-}: {
-  name: string | null;
-  size?: number;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  const Icon = (name && ICONS[name]) || Package;
-  return <Icon size={size} className={className} style={style} />;
-}
 
 interface CatFormState {
   name: string;
-  color: string;
   icon: string;
 }
 
-const EMPTY_FORM: CatFormState = { name: '', color: COLORS[0], icon: 'Package' };
+const EMPTY_FORM: CatFormState = { name: '', icon: 'Package' };
 
 type ModalState =
   | { type: 'add' }
@@ -134,6 +32,7 @@ export default function CategoriesPage() {
   const [modal, setModal] = useState<ModalState>(null);
   const [form, setForm] = useState<CatFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [showAllCats, setShowAllCats] = useState(false);
   const [deleteTxCount, setDeleteTxCount] = useState<number | null>(null);
   const [addTagValue, setAddTagValue] = useState('');
   const [showAddTag, setShowAddTag] = useState(false);
@@ -166,7 +65,6 @@ export default function CategoriesPage() {
   const openEdit = (cat: Category) => {
     setForm({
       name: cat.name,
-      color: cat.color || COLORS[0],
       icon: cat.icon || 'Package',
     });
     setModal({ type: 'edit', category: cat });
@@ -189,7 +87,6 @@ export default function CategoriesPage() {
     setSaving(true);
     const payload = {
       name: form.name.trim(),
-      color: form.color,
       icon: form.icon,
     };
 
@@ -273,15 +170,6 @@ export default function CategoriesPage() {
       <PageHeader
         title="Categorías"
         subtitle={`${categories.length} categoría${categories.length !== 1 ? 's' : ''} configurada${categories.length !== 1 ? 's' : ''}`}
-        action={
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-[12px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90"
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            Nueva
-          </button>
-        }
       />
 
       {/* Search */}
@@ -295,33 +183,36 @@ export default function CategoriesPage() {
         />
       </div>
 
-      {/* Empty state */}
-      {filtered.length === 0 && (
+      {/* Empty search state */}
+      {filtered.length === 0 && searchQuery && (
         <div className="text-center py-14 rounded-[20px] bg-bg-input/40 border border-border">
           <Package size={36} className="mx-auto text-text3 mb-3" />
-          <p className="text-text3 text-sm">
-            {searchQuery ? 'Sin resultados' : 'No tienes categorías aún'}
-          </p>
-          {!searchQuery && (
-            <button onClick={openAdd} className="mt-3 text-accent text-sm font-medium">
-              Crear primera categoría
-            </button>
-          )}
+          <p className="text-text3 text-sm">Sin resultados</p>
         </div>
       )}
 
       {/* Category list */}
+      {!searchQuery && filtered.length > 5 && (
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] text-text3">
+            {showAllCats ? filtered.length : 5} de {filtered.length}
+          </span>
+          <button
+            onClick={() => setShowAllCats((v) => !v)}
+            className="text-[13px] font-medium text-accent"
+          >
+            {showAllCats ? 'Ver menos' : 'Ver todas'}
+          </button>
+        </div>
+      )}
       <div className="space-y-2">
-        {filtered.map((cat) => (
+        {(searchQuery || showAllCats ? filtered : filtered.slice(0, 5)).map((cat) => (
           <div
             key={cat.id}
             className="flex items-center gap-3 p-3.5 rounded-[20px] bg-bg-input/40 border border-border"
           >
-            <div
-              className="w-10 h-10 rounded-[13px] flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: (cat.color || '#71717a') + '22' }}
-            >
-              <CategoryIcon name={cat.icon} size={18} style={{ color: cat.color || '#71717a' }} />
+            <div className="w-10 h-10 rounded-[13px] border border-border flex items-center justify-center flex-shrink-0">
+              <CategoryIcon name={cat.icon} size={18} className="text-accent" />
             </div>
             <p className="font-sans text-[14px] font-semibold text-text1 flex-1 min-w-0 truncate">
               {cat.name}
@@ -342,6 +233,17 @@ export default function CategoriesPage() {
             </div>
           </div>
         ))}
+        {!searchQuery && (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-3 p-3.5 rounded-[20px] border-2 border-dashed border-border text-text3 hover:text-text2 hover:border-border-focus transition-colors w-full"
+          >
+            <div className="w-10 h-10 rounded-[13px] border-2 border-dashed border-current flex items-center justify-center flex-shrink-0">
+              <Plus size={16} strokeWidth={1.5} />
+            </div>
+            <span className="text-[14px] font-medium">Nueva categoría</span>
+          </button>
+        )}
       </div>
 
       {/* Tags section */}
@@ -460,46 +362,27 @@ export default function CategoriesPage() {
             />
           </div>
 
-          {/* Color */}
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
-              Color
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setForm((f) => ({ ...f, color }))}
-                  className="w-8 h-8 rounded-full transition-transform hover:scale-110 relative flex-shrink-0"
-                  style={{ backgroundColor: color }}
-                >
-                  {form.color === color && (
-                    <Check size={14} className="absolute inset-0 m-auto text-white drop-shadow" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Icon picker */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
               Ícono
             </label>
             <div className="grid grid-cols-8 gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {Object.keys(ICONS).map((iconName) => {
-                const Icon = ICONS[iconName];
+              {Object.keys(CATEGORY_ICONS).map((iconName) => {
+                const Icon = CATEGORY_ICONS[iconName];
+                const selected = form.icon === iconName;
                 return (
                   <button
                     key={iconName}
                     onClick={() => setForm((f) => ({ ...f, icon: iconName }))}
                     title={iconName}
                     className={cn(
-                      'w-9 h-9 rounded-[12px] flex items-center justify-center transition-colors',
-                      form.icon === iconName
-                        ? 'bg-accent text-bg'
-                        : 'bg-bg-input text-text3 hover:text-text1 hover:bg-bg-input/80'
+                      'w-9 h-9 rounded-[12px] flex items-center justify-center transition-colors border',
+                      selected
+                        ? 'text-white dark:text-[#1A1A2E] border-transparent'
+                        : 'bg-bg-input text-text3 border-transparent hover:text-text1 hover:border-border'
                     )}
+                    style={selected ? { background: 'var(--card-bg)' } : undefined}
                   >
                     <Icon size={16} />
                   </button>
@@ -510,18 +393,12 @@ export default function CategoriesPage() {
 
           {/* Preview */}
           <div className="flex items-center gap-3 p-3 bg-bg-input/50 border border-border rounded-[14px]">
-            <div
-              className="w-9 h-9 rounded-[12px] flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: form.color + '33' }}
-            >
-              <CategoryIcon name={form.icon} size={18} style={{ color: form.color }} />
+            <div className="w-9 h-9 rounded-[12px] border border-border flex items-center justify-center flex-shrink-0">
+              <CategoryIcon name={form.icon} size={18} className="text-accent" />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: form.color }} />
-              <span className="text-text1 text-[14px] font-medium">
-                {form.name || 'Nombre de categoría'}
-              </span>
-            </div>
+            <span className="text-text1 text-[14px] font-medium">
+              {form.name || 'Nombre de categoría'}
+            </span>
           </div>
 
           <div className="flex gap-3 pt-1">
@@ -534,7 +411,8 @@ export default function CategoriesPage() {
             <button
               onClick={saveCategory}
               disabled={saving}
-              className="flex-[2] h-12 rounded-[14px] bg-accent text-bg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="flex-[2] h-12 rounded-[14px] font-semibold text-white dark:text-[#1A1A2E] hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{ background: 'var(--card-bg)' }}
             >
               {saving ? 'Guardando...' : modal?.type === 'add' ? 'Crear' : 'Guardar'}
             </button>

@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={id}
             className={cn(
               'w-full py-2.5 bg-bg-input border border-border rounded-[14px]',
-              'text-[15px] text-text1 placeholder:text-text3',
+              'text-[13px] text-text1 placeholder:text-text3',
               'focus:outline-none focus:border-border-focus transition-colors',
               leftIcon ? 'pl-10 pr-4' : 'px-4',
               rightIcon ? 'pr-10' : '',

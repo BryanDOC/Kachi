@@ -1,33 +1,30 @@
 'use client';
 
+import { TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CategoryIcon } from '@/components/ui/CategoryIcon';
 
 export interface TransactionRowProps {
   description: string;
   date: string;
   category?: string;
-  icon?: string;
+  iconName?: string | null;
   amount: string;
   type: 'income' | 'expense';
+  onDelete?: () => void;
 }
 
-export function TransactionRow({
-  description,
-  date,
-  category,
-  icon,
-  amount,
-  type,
-}: TransactionRowProps) {
+export function TransactionRow({ description, date, category, iconName, amount, type, onDelete }: TransactionRowProps) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0">
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-        style={{
-          background: type === 'income' ? 'rgba(61,255,192,0.08)' : 'rgba(255,107,107,0.08)',
-        }}
-      >
-        {icon || (type === 'income' ? '💰' : '💸')}
+    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 group">
+      <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
+        {iconName ? (
+          <CategoryIcon name={iconName} size={18} style={{ stroke: 'url(#icon-card-gradient)' }} />
+        ) : type === 'income' ? (
+          <TrendingUp size={18} style={{ stroke: 'url(#icon-card-gradient)' }} />
+        ) : (
+          <TrendingDown size={18} style={{ stroke: 'url(#icon-card-gradient)' }} />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[14px] font-medium text-text1 truncate leading-snug">{description}</p>
@@ -41,14 +38,19 @@ export function TransactionRow({
           )}
         </div>
       </div>
-      <p
-        className={cn(
-          'text-[14px] font-semibold flex-shrink-0 tabular-nums',
-          type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <p className={cn('text-[14px] font-semibold tabular-nums', type === 'income' ? 'text-accent' : 'text-[#FF6B6B]')}>
+          {type === 'income' ? '+' : '-'} {amount}
+        </p>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="opacity-0 group-hover:opacity-100 p-1.5 text-text3 hover:text-[#FF6B6B] hover:bg-red-500/10 rounded-lg transition-all"
+          >
+            <Trash2 size={15} />
+          </button>
         )}
-      >
-        {type === 'income' ? '+' : '-'} {amount}
-      </p>
+      </div>
     </div>
   );
 }

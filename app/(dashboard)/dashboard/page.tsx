@@ -1,65 +1,50 @@
 'use client';
 
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { BalanceCard } from '@/components/dashboard/BalanceCard';
 import { UpcomingExpensesSection } from '@/components/dashboard/UpcomingExpensesSection';
-import { RecentTransactionsSection } from '@/components/dashboard/RecentTransactionsSection';
-
-// ============ MOCK DATA ============
-const MOCK_BALANCE = 'S/ 1,353';
-const MOCK_PERIOD = 'Abril 2026';
-const MOCK_USER_NAME = 'KACHI';
-
-const MOCK_UPCOMING_EXPENSES = [
-  { id: '1', name: 'Netflix', daysUntil: 0, billingDay: 15, amount: 'S/ 38.90' },
-  { id: '2', name: 'Internet Claro', daysUntil: 2, billingDay: 17, amount: 'S/ 89.00' },
-];
-
-const MOCK_TRANSACTIONS = [
-  {
-    id: '1',
-    description: 'Plaza Vea',
-    date: '14 abr',
-    category: 'Alimentacion',
-    icon: '🛒',
-    amount: 'S/ 127.50',
-    type: 'expense' as const,
-  },
-  {
-    id: '2',
-    description: 'Salario Caja Piura',
-    date: '1 abr',
-    category: 'Trabajo',
-    icon: '💼',
-    amount: 'S/ 3,200.00',
-    type: 'income' as const,
-  },
-  {
-    id: '3',
-    description: 'Bus Piura - Huaraz',
-    date: '10 abr',
-    category: 'Transporte',
-    icon: '🚌',
-    amount: 'S/ 85.00',
-    type: 'expense' as const,
-  },
-  {
-    id: '4',
-    description: 'Restaurante La Brisa',
-    date: '8 abr',
-    category: 'Salidas',
-    icon: '🍽️',
-    amount: 'S/ 67.00',
-    type: 'expense' as const,
-  },
-];
-// ===================================
+import { RecentTransactionsSection, Transaction } from '@/components/dashboard/RecentTransactionsSection';
+import { useUI } from '@/lib/context/ui-context';
+import { useUpcomingFixedExpenses } from '@/lib/hooks/useUpcomingFixedExpenses';
+import { useTransactions } from '@/lib/hooks/useTransactions';
+import { formatDate } from '@/lib/utils/date';
+import { formatCurrency } from '@/lib/utils/currency';
 
 export default function DashboardPage() {
+  const { openTxSheet } = useUI();
+  const { upcoming } = useUpcomingFixedExpenses();
+
+  // All-time balance (no date filter)
+  const { transactions, isLoading } = useTransactions();
+
+  const balance = transactions.reduce((acc, tx) =>
+    tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0
+  );
+
+  const defaultCurrencyCode = transactions.find((t) => t.currencies?.code)?.currencies?.code ?? 'PEN';
+  const balanceStr = formatCurrency(balance, defaultCurrencyCode);
+  const period = format(new Date(), "MMMM yyyy", { locale: es });
+
+  const recentTransactions: Transaction[] = transactions.slice(0, 5).map((tx) => ({
+    id: tx.id,
+    description: tx.description,
+    date: formatDate(tx.date, 'd MMM'),
+    category: tx.categories?.name,
+    iconName: tx.categories?.icon ?? null,
+    amount: formatCurrency(tx.amount, tx.currencies?.code ?? 'PEN'),
+    type: tx.type as 'income' | 'expense',
+  }));
+
   return (
     <div className="space-y-6 max-w-lg mx-auto lg:max-w-none">
-      <BalanceCard balance={MOCK_BALANCE} period={MOCK_PERIOD} userName={MOCK_USER_NAME} />
-      <UpcomingExpensesSection expenses={MOCK_UPCOMING_EXPENSES} />
-      <RecentTransactionsSection transactions={MOCK_TRANSACTIONS} />
+      <BalanceCard balance={isLoading ? '...' : balanceStr} period={period} />
+      <UpcomingExpensesSection expenses={upcoming} />
+      <RecentTransactionsSection
+        transactions={recentTransactions}
+        isLoading={isLoading}
+        onCreateClick={openTxSheet}
+      />
     </div>
   );
 }

@@ -1,208 +1,221 @@
 'use client';
 
-import { use } from 'react';
 import { useTrip, useTripTransactions } from '@/lib/hooks/useTrips';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/date';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Plus } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useUI } from '@/lib/context/ui-context';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
-export default function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { trip, isLoading: tripLoading } = useTrip(id);
-  const {
-    transactions,
-    totalSpent,
-    byCategory,
-    isLoading: transactionsLoading,
-  } = useTripTransactions(id);
+// ── MOCK DATA — reemplazar con useTrip/useTripTransactions cuando esté listo ──
+const MOCK = {
+  name: 'Huaraz',
+  dates: '10 — 20 Abr 2026 · 10 días',
+  status: 'active' as const,
+  emoji: '🏔️',
+  gradient: 'linear-gradient(135deg, #1a3a2a, #2d6a4f, #3a8a5a)',
+  totalSpent: 'S/ 348.50',
+  movimientos: 12,
+};
 
-  const isLoading = tripLoading || transactionsLoading;
+const MOCK_CATS = [
+  { id: '1', emoji: '🚌', name: 'Transporte', count: 4, amount: 'S/ 142.00', bg: 'rgba(96,165,250,0.12)' },
+  { id: '2', emoji: '🍽️', name: 'Alimentación', count: 5, amount: 'S/ 118.50', bg: 'rgba(61,255,192,0.10)' },
+  { id: '3', emoji: '🏨', name: 'Alojamiento', count: 2, amount: 'S/ 68.00', bg: 'rgba(252,211,77,0.10)' },
+  { id: '4', emoji: '🎒', name: 'Actividades', count: 1, amount: 'S/ 20.00', bg: 'rgba(167,139,250,0.10)' },
+];
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STATUS_BADGE = {
+  active: {
+    label: 'Activo',
+    cls: 'bg-[rgba(61,255,192,0.2)] text-[#3DFFC0] border border-[rgba(61,255,192,0.3)]',
+  },
+  completed: {
+    label: 'Completado',
+    cls: 'bg-[rgba(96,165,250,0.2)] text-[#93C5FD] border border-[rgba(96,165,250,0.3)]',
+  },
+  cancelled: {
+    label: 'Cancelado',
+    cls: 'bg-[rgba(156,163,175,0.2)] text-[#9CA3AF] border border-[rgba(156,163,175,0.3)]',
+  },
+};
+
+export default function TripDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const { openTxSheet } = useUI();
+  const { isLoading: tripLoading } = useTrip(id);
+  const { transactions, totalSpent, byCategory, isLoading: txLoading } = useTripTransactions(id);
+
+  const isLoading = tripLoading || txLoading;
+  const badge = STATUS_BADGE[MOCK.status];
+  const pieData = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-64 bg-zinc-900 rounded-xl animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-zinc-900 rounded-xl animate-pulse" />
-          ))}
+      <div className="max-w-lg mx-auto lg:max-w-none space-y-4 animate-pulse">
+        <div className="h-[260px] rounded-[22px] bg-bg-input" />
+        <div className="grid grid-cols-3 gap-2.5">
+          {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-[16px] bg-bg-input" />)}
         </div>
       </div>
     );
   }
 
-  if (!trip) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500">Viaje no encontrado</p>
-        <Link href="/dashboard/trips" className="text-amber-500 hover:text-amber-400 mt-4 block">
-          Volver a viajes
-        </Link>
-      </div>
-    );
-  }
-
-  const statusConfig = {
-    active: { label: 'Activo', color: 'bg-green-500' },
-    completed: { label: 'Completado', color: 'bg-blue-500' },
-    cancelled: { label: 'Cancelado', color: 'bg-zinc-500' },
-  };
-
-  const formatDateRange = () => {
-    if (!trip.start_date && !trip.end_date) return null;
-    const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
-    const start = trip.start_date
-      ? new Date(trip.start_date).toLocaleDateString('es-PE', options)
-      : '';
-    const end = trip.end_date ? new Date(trip.end_date).toLocaleDateString('es-PE', options) : '';
-    if (start && end) return `${start} - ${end}`;
-    return start || end;
-  };
-
-  const pieData = byCategory.map((cat) => ({
-    name: cat.name,
-    value: cat.total,
-    color: cat.color,
-  }));
-
   return (
-    <div className="space-y-8">
+    <div className="max-w-lg mx-auto lg:max-w-none space-y-5">
+      {/* Back */}
       <Link
         href="/dashboard/trips"
-        className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-text3 hover:text-text1 transition-colors"
       >
-        <ArrowLeft size={20} />
+        <ArrowLeft size={15} />
         Volver a viajes
       </Link>
 
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative h-64 md:h-80 rounded-2xl overflow-hidden"
-      >
-        {trip.cover_image ? (
-          <Image src={trip.cover_image} alt={trip.name} fill className="object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-2">
-            <span
-              className={cn(
-                'px-3 py-1 rounded text-sm font-medium text-white',
-                statusConfig[trip.status].color
-              )}
-            >
-              {statusConfig[trip.status].label}
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2">{trip.name}</h1>
-          {formatDateRange() && (
-            <div className="flex items-center gap-2 text-zinc-300">
-              <Calendar size={16} />
-              <span>{formatDateRange()}</span>
-            </div>
-          )}
-          {trip.description && <p className="text-zinc-400 mt-2 max-w-2xl">{trip.description}</p>}
+      <div className="relative w-full h-[260px] rounded-[22px] overflow-hidden">
+        <div
+          className="absolute inset-0 flex items-center justify-center text-[120px]"
+          style={{ background: MOCK.gradient }}
+        >
+          {MOCK.emoji}
         </div>
-      </motion.div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-amber-900/40 to-amber-950/40 border border-amber-800/50 rounded-xl p-6"
-        >
-          <p className="text-zinc-400 text-sm mb-1">Total gastado</p>
-          <p className="text-3xl font-serif font-bold text-white">
-            {formatCurrency(totalSpent, 'PEN')}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          <span
+            className={cn(
+              'text-[11px] font-semibold px-2.5 py-1 rounded-full tracking-[0.3px] inline-block mb-2',
+              badge.cls
+            )}
+          >
+            {badge.label}
+          </span>
+          <p className="font-sans text-[24px] font-bold text-white mb-1">
+            {MOCK.name}
           </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"
-        >
-          <p className="text-zinc-400 text-sm mb-1">Transacciones</p>
-          <p className="text-3xl font-serif font-bold text-white">{transactions.length}</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"
-        >
-          <p className="text-zinc-400 text-sm mb-1">Categorías</p>
-          <p className="text-3xl font-serif font-bold text-white">{byCategory.length}</p>
-        </motion.div>
+          <div className="flex items-center gap-1.5 text-[12px] text-white/60">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <rect
+                x="1"
+                y="2"
+                width="11"
+                height="10"
+                rx="2"
+                stroke="rgba(255,255,255,0.6)"
+                strokeWidth="1.1"
+              />
+              <path d="M1 5.5h11" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
+            </svg>
+            {MOCK.dates}
+          </div>
+        </div>
       </div>
 
-      {/* Chart & Categories */}
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { val: MOCK.totalSpent, lbl: 'Gastado', accent: true },
+          { val: MOCK.movimientos.toString(), lbl: 'Movimientos', accent: false },
+          { val: MOCK_CATS.length.toString(), lbl: 'Categorías', accent: false },
+        ].map(({ val, lbl, accent }) => (
+          <div key={lbl} className="rounded-[16px] p-3.5 bg-bg-input/40 border border-border">
+            <p
+              className={cn(
+                'font-sans text-[18px] font-bold tabular-nums mb-0.5',
+                accent ? 'text-accent' : 'text-text1'
+              )}
+            >
+              {val}
+            </p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.5px] text-text3">{lbl}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Category list */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-sans text-[15px] font-semibold text-text1">Por categoría</p>
+          <span className="text-[12px] text-accent cursor-pointer">Ver todo</span>
+        </div>
+        <div className="flex flex-col gap-2">
+          {MOCK_CATS.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex items-center gap-3 px-3.5 py-3 rounded-[16px] bg-bg-input/40 border border-border"
+            >
+              <div
+                className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[18px] flex-shrink-0"
+                style={{ background: cat.bg }}
+              >
+                {cat.emoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-medium text-text1">{cat.name}</p>
+                <p className="text-[12px] text-text3 mt-0.5">{cat.count} movimientos</p>
+              </div>
+              <p className="font-sans text-[14px] font-semibold text-text1/85 tabular-nums flex-shrink-0">
+                {cat.amount}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PieChart — datos reales */}
       {byCategory.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"
-        >
-          <h2 className="text-xl font-semibold text-white mb-6">Gastos por categoría</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="h-64">
+        <div className="rounded-[20px] p-5 bg-bg-input/40 border border-border">
+          <p className="font-sans text-[15px] font-semibold text-text1 mb-5">Distribución</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={55}
+                    outerRadius={90}
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2">
-                            <p className="text-white font-medium">{data.name}</p>
-                            <p className="text-zinc-400">{formatCurrency(data.value, 'PEN')}</p>
-                          </div>
-                        );
-                      }
-                      return null;
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-bg-input border border-border rounded-[12px] px-3 py-2">
+                          <p className="text-text1 font-medium text-[13px]">{d.name}</p>
+                          <p className="text-text3 text-[12px]">{formatCurrency(d.value, 'PEN')}</p>
+                        </div>
+                      );
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {byCategory.map((cat) => (
                 <div key={cat.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                    <span className="text-zinc-300">{cat.name}</span>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span className="text-text2 text-[13px]">{cat.name}</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-white font-medium">{formatCurrency(cat.total, 'PEN')}</p>
-                    <p className="text-zinc-500 text-sm">
+                    <p className="text-text1 font-semibold text-[13px] tabular-nums">
+                      {formatCurrency(cat.total, 'PEN')}
+                    </p>
+                    <p className="text-text3 text-[11px]">
                       {totalSpent > 0 ? Math.round((cat.total / totalSpent) * 100) : 0}%
                     </p>
                   </div>
@@ -210,75 +223,70 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Transactions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">Transacciones del viaje</h2>
-          <Link
-            href={`/dashboard/transactions/new?trip=${id}`}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black font-medium rounded-lg hover:bg-amber-400 transition-colors text-sm"
+      <div className="rounded-[20px] p-5 bg-bg-input/40 border border-border">
+        <div className="flex items-center justify-between mb-5">
+          <p className="font-sans text-[15px] font-semibold text-text1">Movimientos</p>
+          <button
+            onClick={() => openTxSheet(id)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-[10px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90"
           >
-            <Plus size={16} />
-            Agregar gasto
-          </Link>
+            <Plus size={12} strokeWidth={2.5} />
+            Agregar
+          </button>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-zinc-500">No hay transacciones en este viaje</p>
-            <Link
-              href={`/dashboard/transactions/new?trip=${id}`}
-              className="inline-block mt-4 text-amber-500 hover:text-amber-400 font-medium"
+          <div className="text-center py-6">
+            <p className="text-text3 text-[13px]">No hay movimientos en este viaje</p>
+            <button
+              onClick={() => openTxSheet(id)}
+              className="inline-block mt-3 text-accent text-[13px] font-medium"
             >
               Agregar primer gasto
-            </Link>
+            </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {transactions.map((transaction) => (
+          <div className="space-y-2.5">
+            {transactions.map((tx) => (
               <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 bg-zinc-950 rounded-lg"
+                key={tx.id}
+                className="flex items-center justify-between p-3 rounded-[14px] bg-bg-input/60"
               >
-                <div className="flex-1">
-                  <p className="text-white font-medium">{transaction.description}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <p className="text-sm text-zinc-500">{formatDate(transaction.date)}</p>
-                    {transaction.categories && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-text1 font-medium text-[14px] truncate">{tx.description}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-text3 text-[12px]">{formatDate(tx.date)}</p>
+                    {tx.categories && (
                       <span
-                        className="text-xs px-2 py-0.5 rounded"
+                        className="text-[11px] px-1.5 py-0.5 rounded-full"
                         style={{
-                          backgroundColor: (transaction.categories.color || '#52525b') + '20',
-                          color: transaction.categories.color || '#a1a1aa',
+                          backgroundColor: (tx.categories.color || '#52525b') + '20',
+                          color: tx.categories.color || '#a1a1aa',
                         }}
                       >
-                        {transaction.categories.name}
+                        {tx.categories.name}
                       </span>
                     )}
                   </div>
                 </div>
                 <p
                   className={cn(
-                    'text-lg font-semibold',
-                    transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
+                    'text-[14px] font-semibold tabular-nums flex-shrink-0 ml-3',
+                    tx.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
                   )}
                 >
-                  {transaction.type === 'income' ? '+' : '-'}
-                  {formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
+                  {tx.type === 'income' ? '+' : '-'}
+                  {formatCurrency(tx.amount, tx.currencies?.code || 'PEN')}
                 </p>
               </div>
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

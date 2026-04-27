@@ -15,7 +15,10 @@
       "Bash(gh api *)",
       "Bash(npx tsc *)",
       "Bash(git stash *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(rm \"C:\\\\Users\\\\Bryan\\\\Kachi\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\transactions\\\\new\\\\page.tsx\")",
+      "Bash(rmdir \"C:\\\\Users\\\\Bryan\\\\Kachi\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\transactions\\\\new\")",
+      "Bash(grep -v \"Delete \\\\`␍\\\\`\")"
     ]
   }
 }

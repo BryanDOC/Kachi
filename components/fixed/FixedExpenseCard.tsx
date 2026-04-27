@@ -8,7 +8,7 @@ import { FixedExpenseWithRelations } from '@/types';
 import { formatCurrency } from '@/lib/utils/currency';
 
 // ── Cambia esto para ver los 3 diseños ─────────────────────────────────────
-export const CARD_VARIANT: 'blur' | 'gradient' | 'glass' = 'gradient';
+export const CARD_VARIANT: 'blur' | 'gradient' | 'glass' = 'glass';
 // ──────────────────────────────────────────────────────────────────────────
 
 function hexToRgb(hex: string) {
@@ -33,9 +33,10 @@ function Toggle({ on, onClick, disabled, dark }: { on: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       disabled={disabled}
+      style={on ? { background: 'var(--card-bg)' } : undefined}
       className={cn(
-        'w-9 h-[22px] rounded-full relative transition-colors flex-shrink-0 focus:outline-none disabled:opacity-50',
-        on ? 'bg-accent' : dark ? 'bg-white/25' : 'bg-text3/30'
+        'w-9 h-[22px] rounded-full relative transition-all flex-shrink-0 focus:outline-none disabled:opacity-50',
+        !on && (dark ? 'bg-white/25' : 'bg-bg-input border border-border')
       )}
     >
       <span
@@ -257,8 +258,8 @@ function GlassCard({ expense, index, onEdit, onToggle, isToggling, inactive }: F
           </p>
           {expense.categories && (
             <span
-              className="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-full mb-2 truncate w-fit"
-              style={{ backgroundColor: `rgba(${r},${g},${b},0.18)`, color: brandColor, border: `1px solid rgba(${r},${g},${b},0.25)` }}
+              className="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-full mb-2 truncate w-fit text-text2"
+              style={{ backgroundColor: `rgba(${r},${g},${b},0.15)`, border: `1px solid rgba(${r},${g},${b},0.25)` }}
             >
               {expense.categories.name}
             </span>
@@ -266,7 +267,7 @@ function GlassCard({ expense, index, onEdit, onToggle, isToggling, inactive }: F
           </div>
           <div className="flex items-center justify-between">
             {expense.billing_day ? (
-              <div className="flex items-center gap-1 text-[11px] text-text3">
+              <div className="flex items-center gap-1 text-[11px] text-text2">
                 <Calendar size={10} />
                 Día {expense.billing_day}
               </div>

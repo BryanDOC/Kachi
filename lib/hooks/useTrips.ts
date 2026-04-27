@@ -96,7 +96,7 @@ interface TripTransaction {
   amount: number;
   description: string;
   date: string;
-  categories?: { id: string; name: string; color: string | null } | null;
+  categories?: { id: string; name: string; icon: string | null; color: string | null } | null;
   currencies?: { code: string; symbol: string } | null;
 }
 
@@ -121,7 +121,7 @@ export function useTripTransactions(tripId: string) {
           amount,
           description,
           date,
-          categories(id, name, color),
+          categories(id, name, icon, color),
           currencies(code, symbol)
         `
         )

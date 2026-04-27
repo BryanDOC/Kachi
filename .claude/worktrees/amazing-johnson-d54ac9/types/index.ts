@@ -45,6 +45,8 @@ export interface FixedExpense {
   last_updated: string;
   notes: string | null;
   created_at: string;
+  logo_url: string | null;
+  brand_color: string | null;
 }
 
 export interface Trip {

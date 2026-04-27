@@ -6,9 +6,8 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate, getMonthDateRange } from '@/lib/utils/date';
 import { motion } from 'framer-motion';
-import { Plus, Search, Trash2 } from 'lucide-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { Search } from 'lucide-react';
+import { useUI } from '@/lib/context/ui-context';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
@@ -16,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { TransactionWithRelations } from '@/types';
+import { TransactionRow } from '@/components/ui/TransactionRow';
 
 function groupByDate(transactions: TransactionWithRelations[]) {
   const groups: Record<string, TransactionWithRelations[]> = {};
@@ -28,6 +28,7 @@ function groupByDate(transactions: TransactionWithRelations[]) {
 }
 
 export default function TransactionsPage() {
+  const { openTxSheet } = useUI();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -105,15 +106,6 @@ export default function TransactionsPage() {
       <PageHeader
         title="Transacciones"
         subtitle={`${filteredTransactions.length} movimientos`}
-        action={
-          <Link
-            href="/dashboard/transactions/new"
-            className="flex items-center gap-1.5 h-9 px-4 rounded-[12px] bg-accent text-bg text-[13px] font-semibold transition-opacity hover:opacity-90 active:scale-[0.97]"
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            Nuevo
-          </Link>
-        }
       />
 
       {/* Filters */}
@@ -154,12 +146,12 @@ export default function TransactionsPage() {
       {filteredTransactions.length === 0 ? (
         <div className="bg-bg-input/50 border border-border rounded-[20px] py-14 text-center">
           <p className="text-[13px] text-text3">No hay transacciones</p>
-          <Link
-            href="/dashboard/transactions/new"
+          <button
+            onClick={() => openTxSheet()}
             className="inline-block mt-3 text-[13px] text-accent font-medium"
           >
             Crear primera transacción
-          </Link>
+          </button>
         </div>
       ) : (
         <div className="space-y-5">
@@ -175,74 +167,19 @@ export default function TransactionsPage() {
               </p>
               <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
                 {txs.map((transaction) => (
-                  <div
+                  <TransactionRow
                     key={transaction.id}
-                    className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 group"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                      style={{
-                        background:
-                          transaction.type === 'income'
-                            ? 'rgba(61,255,192,0.08)'
-                            : 'rgba(255,107,107,0.08)',
-                      }}
-                    >
-                      {transaction.type === 'income' ? '💰' : '💸'}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-medium text-text1 truncate leading-snug">
-                        {transaction.description}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {transaction.categories && (
-                          <span
-                            className="text-[11px] font-medium"
-                            style={{ color: transaction.categories.color || 'var(--text3)' }}
-                          >
-                            {transaction.categories.name}
-                          </span>
-                        )}
-                        {transaction.subcategories && (
-                          <>
-                            <span className="text-[11px] text-text3/50">·</span>
-                            <span className="text-[11px] text-text3">
-                              {transaction.subcategories.name}
-                            </span>
-                          </>
-                        )}
-                        {transaction.notes && (
-                          <>
-                            <span className="text-[11px] text-text3/50">·</span>
-                            <span className="text-[11px] text-text3 truncate">{transaction.notes}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <p
-                        className={cn(
-                          'text-[14px] font-semibold tabular-nums',
-                          transaction.type === 'income' ? 'text-accent' : 'text-[#FF6B6B]'
-                        )}
-                      >
-                        {transaction.type === 'income' ? '+' : '-'}{' '}
-                        {formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
-                      </p>
-
-                      <button
-                        onClick={() => {
-                          setSelectedTransaction(transaction);
-                          setShowDeleteModal(true);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-text3 hover:text-[#FF6B6B] hover:bg-red-500/10 rounded-lg transition-all"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
+                    description={transaction.description}
+                    date={formatDate(transaction.date, 'd MMM')}
+                    category={transaction.categories?.name}
+                    iconName={transaction.categories?.icon ?? null}
+                    amount={formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
+                    type={transaction.type as 'income' | 'expense'}
+                    onDelete={() => {
+                      setSelectedTransaction(transaction);
+                      setShowDeleteModal(true);
+                    }}
+                  />
                 ))}
               </div>
             </motion.div>

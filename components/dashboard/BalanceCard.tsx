@@ -6,11 +6,13 @@ import { useUI } from '@/lib/context/ui-context';
 export interface BalanceCardProps {
   balance: string;
   period: string;
-  userName?: string;
 }
 
-export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProps) {
-  const { setSidebarOpen, openTxSheet } = useUI();
+export function BalanceCard({ balance, period }: BalanceCardProps) {
+  const { setSidebarOpen, openTxSheet, userProfile } = useUI();
+
+  const initial = userProfile?.fullName?.charAt(0).toUpperCase() ?? 'K';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -42,9 +44,15 @@ export function BalanceCard({ balance, period, userName = 'K' }: BalanceCardProp
         <div className="flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="w-[38px] h-[38px] rounded-full bg-white/18 border-2 border-white/22 flex items-center justify-center font-display text-[15px] font-bold text-white dark:bg-[#1A1A2E]/10 dark:border-[#1A1A2E]/15 dark:text-[#1A1A2E] transition-opacity hover:opacity-80 active:scale-95"
+            className="w-[38px] h-[38px] rounded-full overflow-hidden border-2 border-white/22 dark:border-[#1A1A2E]/15 transition-opacity hover:opacity-80 active:scale-95 flex-shrink-0"
           >
-            {userName.charAt(0).toUpperCase()}
+            {userProfile?.avatarUrl ? (
+              <img src={userProfile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-white/18 dark:bg-[#1A1A2E]/10 flex items-center justify-center font-display text-[15px] font-bold text-white dark:text-[#1A1A2E]">
+                {initial}
+              </div>
+            )}
           </button>
           <div className="flex items-center gap-2">
             <div

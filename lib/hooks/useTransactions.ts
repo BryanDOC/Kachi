@@ -9,6 +9,7 @@ interface UseTransactionsOptions {
   endDate?: string;
   categoryId?: string;
   type?: 'expense' | 'income' | 'all';
+  version?: number;
 }
 
 export function useTransactions(options: UseTransactionsOptions = {}) {
@@ -65,7 +66,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
   useEffect(() => {
     fetchTransactions();
-  }, [options.startDate, options.endDate, options.categoryId, options.type]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.startDate, options.endDate, options.categoryId, options.type, options.version]);
 
   return {
     transactions,

@@ -12,11 +12,10 @@ import { formatDate } from '@/lib/utils/date';
 import { formatCurrency } from '@/lib/utils/currency';
 
 export default function DashboardPage() {
-  const { openTxSheet } = useUI();
+  const { openTxSheet, txVersion } = useUI();
   const { upcoming } = useUpcomingFixedExpenses();
 
-  // All-time balance (no date filter)
-  const { transactions, isLoading } = useTransactions();
+  const { transactions, isLoading } = useTransactions({ version: txVersion });
 
   const balance = transactions.reduce((acc, tx) =>
     tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0

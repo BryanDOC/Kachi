@@ -422,13 +422,18 @@ export default function FixedExpensesPage() {
               control={control}
               render={({ field }) => (
                 <Input
-                  {...field}
                   label="Monto"
                   type="number"
                   step="0.01"
                   placeholder="0.00"
                   error={errors.amount?.message}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    field.onChange(raw === '' ? undefined : parseFloat(raw));
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
                 />
               )}
             />

@@ -225,6 +225,7 @@ export default function TripsPage() {
             totalSpent="—"
             status={t.status}
             gradient={tripGradient(t, i)}
+            coverImage={t.cover_image}
             href={`/dashboard/trips/${t.id}`}
           />
         ))}

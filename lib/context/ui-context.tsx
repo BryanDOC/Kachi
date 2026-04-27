@@ -16,6 +16,8 @@ interface UIContextValue {
   openTxSheet: (tripId?: string) => void;
   closeTxSheet: () => void;
   userProfile: UserProfile | null;
+  txVersion: number;
+  notifyTxCreated: () => void;
 }
 
 const UIContext = createContext<UIContextValue>({
@@ -26,6 +28,8 @@ const UIContext = createContext<UIContextValue>({
   openTxSheet: () => {},
   closeTxSheet: () => {},
   userProfile: null,
+  txVersion: 0,
+  notifyTxCreated: () => {},
 });
 
 export function UIProvider({ children }: { children: ReactNode }) {
@@ -33,6 +37,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [txSheetOpen, setTxSheetOpen] = useState(false);
   const [txTripId, setTxTripId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [txVersion, setTxVersion] = useState(0);
+
+  const notifyTxCreated = () => setTxVersion((v) => v + 1);
 
   useEffect(() => {
     const supabase = createClient();
@@ -70,7 +77,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UIContext.Provider value={{ sidebarOpen, setSidebarOpen, txSheetOpen, txTripId, openTxSheet, closeTxSheet, userProfile }}>
+    <UIContext.Provider value={{ sidebarOpen, setSidebarOpen, txSheetOpen, txTripId, openTxSheet, closeTxSheet, userProfile, txVersion, notifyTxCreated }}>
       {children}
     </UIContext.Provider>
   );

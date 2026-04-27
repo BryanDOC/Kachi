@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 const STATUS = {
@@ -25,6 +26,7 @@ export interface TripCardLargeProps {
   status: 'active' | 'completed' | 'cancelled';
   emoji?: string;
   gradient?: string;
+  coverImage?: string | null;
   href: string;
 }
 
@@ -35,6 +37,7 @@ export function TripCardLarge({
   status,
   emoji = '✈️',
   gradient = 'linear-gradient(135deg, #1a3a2a, #2d6a4f)',
+  coverImage,
   href,
 }: TripCardLargeProps) {
   const { label, cls } = STATUS[status];
@@ -44,12 +47,16 @@ export function TripCardLarge({
       href={href}
       className="block w-full h-[200px] rounded-[22px] relative overflow-hidden transition-transform active:scale-[0.98]"
     >
-      <div
-        className="absolute inset-0 flex items-center justify-center text-[80px]"
-        style={{ background: gradient }}
-      >
-        {emoji}
-      </div>
+      {coverImage ? (
+        <Image src={coverImage} alt={name} fill className="object-cover" />
+      ) : (
+        <div
+          className="absolute inset-0 flex items-center justify-center text-[80px]"
+          style={{ background: gradient }}
+        >
+          {emoji}
+        </div>
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
       <div className="absolute inset-0 flex flex-col justify-between p-3.5">
         <div className="flex justify-end">

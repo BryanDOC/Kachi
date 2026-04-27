@@ -28,7 +28,7 @@ function groupByDate(transactions: TransactionWithRelations[]) {
 }
 
 export default function TransactionsPage() {
-  const { openTxSheet } = useUI();
+  const { openTxSheet, txVersion } = useUI();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -44,6 +44,7 @@ export default function TransactionsPage() {
     endDate: end,
     type: typeFilter,
     categoryId: categoryFilter || undefined,
+    version: txVersion,
   });
 
   const { categories } = useCategories();

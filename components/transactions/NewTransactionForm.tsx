@@ -119,11 +119,11 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
           type: data.type,
           amount: data.amount,
           currency_id: data.currency_id,
-          category_id: data.type === 'expense' ? data.category_id : null,
-          trip_id: data.trip_id,
+          category_id: data.type === 'expense' ? (data.category_id || null) : null,
+          trip_id: data.trip_id || null,
           description: data.description,
           date: data.date,
-          notes: data.notes,
+          notes: data.notes || null,
         })
         .select('id')
         .single();
@@ -184,13 +184,18 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
         control={control}
         render={({ field }) => (
           <Input
-            {...field}
             label="Monto"
             type="number"
             step="0.01"
             placeholder="0.00"
             error={errors.amount?.message}
-            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+            value={field.value ?? ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              field.onChange(raw === '' ? undefined : parseFloat(raw));
+            }}
+            onBlur={field.onBlur}
+            name={field.name}
           />
         )}
       />

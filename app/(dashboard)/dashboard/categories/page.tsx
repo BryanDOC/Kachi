@@ -85,9 +85,13 @@ export default function CategoriesPage() {
       return;
     }
     setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error('No estás autenticado'); setSaving(false); return; }
+
     const payload = {
       name: form.name.trim(),
       icon: form.icon,
+      user_id: user.id,
     };
 
     if (modal?.type === 'add') {

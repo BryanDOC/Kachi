@@ -4,6 +4,7 @@ import { DM_Sans, Syne, Changa_One, Barlow_Condensed, Poppins } from 'next/font/
 import './globals.css';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { Toaster } from 'sonner';
+import InstallPrompt from '@/components/ui/InstallPrompt';
 
 const mainFont = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', display: 'swap' });
 
@@ -39,7 +40,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: 'Gastos Personales',
+  title: 'Kachi',
   description: 'Tracker de gastos personales',
 };
 
@@ -50,10 +51,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0C0C0E" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Kachi" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body className={`${mainFont.variable} ${syne.variable} ${numericFont.variable} ${changaOne.variable} ${barlowCondensed.variable} antialiased font-sans`}>
         <ThemeProvider>
           {children}
           <Toaster position="top-right" richColors />
+          <InstallPrompt />
         </ThemeProvider>
       </body>
     </html>

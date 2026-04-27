@@ -64,9 +64,9 @@ export function RecentTransactionsSection({
 
       {transactions.length === 0 ? (
         <div className="text-center py-12 bg-bg-input/50 rounded-[20px] border border-border">
-          <p className="text-text3">{emptyMessage}</p>
+          <p className="text-[13px] text-text3">{emptyMessage}</p>
           {onCreateClick && (
-            <button onClick={onCreateClick} className="inline-block mt-4 text-accent font-medium">
+            <button onClick={onCreateClick} className="inline-block mt-3 text-[13px] text-accent font-medium">
               {createLabel}
             </button>
           )}

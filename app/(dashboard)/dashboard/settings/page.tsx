@@ -56,10 +56,12 @@ export default function SettingsPage() {
       }
 
       setLoadingCurrencies(true);
-      const { data: curr } = await supabase
+      const { data: curr, error: currError } = await supabase
         .from('currencies')
         .select('*')
+        .eq('user_id', user.id)
         .order('is_default', { ascending: false });
+      if (currError) console.error('Error loading currencies:', currError);
       setCurrencies(curr || []);
       setLoadingCurrencies(false);
     };
@@ -177,7 +179,8 @@ export default function SettingsPage() {
       .single();
 
     if (error) {
-      toast.error('Error al agregar divisa');
+      console.error('Error adding currency:', error);
+      toast.error(`Error al agregar divisa: ${error.message}`);
     } else {
       setCurrencies((prev) => [...prev, data]);
       setAddCurrModal(false);

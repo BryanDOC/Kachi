@@ -34,9 +34,8 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         options: {
-          data: {
-            full_name: data.fullName,
-          },
+          data: { full_name: data.fullName },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -45,7 +44,13 @@ export default function RegisterPage() {
         return;
       }
 
-      if (authData.user) {
+      if (authData.user && !authData.session) {
+        toast.success('Confirma tu correo electrónico para activar tu cuenta');
+        router.push('/login');
+        return;
+      }
+
+      if (authData.user && authData.session) {
         const { error: profileError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           full_name: data.fullName,

@@ -59,9 +59,11 @@ export function UIProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('full_name, avatar_url')
         .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          // Prefer profiles table, fallback to auth user_metadata (Google/OAuth avatars)
+        .maybeSingle()
+        .then(async ({ data }) => {
+          if (!data) {
+            await fetch('/api/seed', { method: 'POST' });
+          }
           const avatarUrl =
             data?.avatar_url ||
             (user.user_metadata?.avatar_url as string | null) ||

@@ -14,9 +14,10 @@ import { CategoryIcon, CATEGORY_ICONS, getSuggestedIcons } from '@/components/ui
 interface CatFormState {
   name: string;
   icon: string;
+  budget_limit: string;
 }
 
-const EMPTY_FORM: CatFormState = { name: '', icon: 'Package' };
+const EMPTY_FORM: CatFormState = { name: '', icon: 'Package', budget_limit: '' };
 
 type ModalState =
   | { type: 'add' }
@@ -66,6 +67,7 @@ export default function CategoriesPage() {
     setForm({
       name: cat.name,
       icon: cat.icon || 'Package',
+      budget_limit: cat.budget_limit != null ? String(cat.budget_limit) : '',
     });
     setModal({ type: 'edit', category: cat });
   };
@@ -91,6 +93,7 @@ export default function CategoriesPage() {
     const payload = {
       name: form.name.trim(),
       icon: form.icon,
+      budget_limit: form.budget_limit ? parseFloat(form.budget_limit) : null,
       user_id: user.id,
     };
 
@@ -168,9 +171,16 @@ export default function CategoriesPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3 animate-pulse">
-        <div className="h-9 bg-bg-input rounded-[14px] w-48" />
-        {[1, 2, 3, 4].map((i) => (
+      <div className="max-w-lg mx-auto lg:max-w-none space-y-4 animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-bg-input flex-shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-5 bg-bg-input rounded w-28" />
+            <div className="h-3 bg-bg-input rounded w-20" />
+          </div>
+        </div>
+        <div className="h-11 bg-bg-input rounded-[14px]" />
+        {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-[68px] bg-bg-input rounded-[20px]" />
         ))}
       </div>
@@ -439,6 +449,22 @@ export default function CategoriesPage() {
                 </div>
               );
             })()}
+          </div>
+
+          {/* Budget limit */}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-1.5">
+              Presupuesto mensual (opcional)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.budget_limit}
+              onChange={(e) => setForm((f) => ({ ...f, budget_limit: e.target.value }))}
+              placeholder="Sin límite"
+              className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus text-[14px] transition-colors"
+            />
           </div>
 
           {/* Preview */}

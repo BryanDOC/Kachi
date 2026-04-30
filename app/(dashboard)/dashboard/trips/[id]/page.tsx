@@ -7,7 +7,7 @@ import { tripSchema, type TripFormData } from '@/lib/validations/trip.schema';
 import { useTrip, useTripTransactions } from '@/lib/hooks/useTrips';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/date';
-import { Plus, Pencil, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUI } from '@/lib/context/ui-context';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -107,6 +107,14 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
     finally { setIsSaving(false); }
   };
 
+  const handleComplete = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.from('trips').update({ status: 'completed' }).eq('id', id);
+    if (error) { toast.error('Error al completar viaje'); return; }
+    toast.success('Viaje completado');
+    refetchTrip();
+  };
+
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -130,6 +138,10 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
         <div className="grid grid-cols-3 gap-2.5">
           {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-[16px] bg-bg-input" />)}
         </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <div key={i} className="h-[66px] rounded-[16px] bg-bg-input" />)}
+        </div>
+        <div className="h-[200px] rounded-[20px] bg-bg-input" />
       </div>
     );
   }
@@ -206,6 +218,16 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           </div>
         ))}
       </div>
+
+      {trip.status === 'active' && (
+        <button
+          onClick={handleComplete}
+          className="w-full h-11 rounded-[16px] bg-[rgba(61,255,192,0.12)] text-[#3DFFC0] border border-[rgba(61,255,192,0.3)] text-[14px] font-semibold hover:bg-[rgba(61,255,192,0.22)] transition-colors flex items-center justify-center gap-2"
+        >
+          <Check size={15} strokeWidth={2.5} />
+          Completar viaje
+        </button>
+      )}
 
       {/* Category breakdown */}
       {byCategory.length > 0 && (

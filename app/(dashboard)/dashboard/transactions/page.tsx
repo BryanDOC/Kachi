@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useTransactions } from '@/lib/hooks/useTransactions';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { formatCurrency } from '@/lib/utils/currency';
-import { formatDate, getMonthDateRange } from '@/lib/utils/date';
+import { subMonths, addMonths } from 'date-fns';
+import { formatDate, getDateRangeForMonth, formatMonthYear } from '@/lib/utils/date';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUI } from '@/lib/context/ui-context';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
@@ -38,7 +39,8 @@ export default function TransactionsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { start, end } = getMonthDateRange();
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const { start, end } = getDateRangeForMonth(selectedMonth);
   const { transactions, isLoading, refetch } = useTransactions({
     startDate: start,
     endDate: end,
@@ -81,26 +83,6 @@ export default function TransactionsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-8 bg-bg-input rounded animate-pulse w-1/3" />
-        <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0">
-              <div className="w-9 h-9 rounded-xl bg-bg-input animate-pulse flex-shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 bg-bg-input rounded animate-pulse w-1/2" />
-                <div className="h-3 bg-bg-input rounded animate-pulse w-1/4" />
-              </div>
-              <div className="h-3.5 bg-bg-input rounded animate-pulse w-16" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -111,6 +93,23 @@ export default function TransactionsPage() {
 
       {/* Filters */}
       <div className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setSelectedMonth((m) => subMonths(m, 1))}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-text3 hover:text-text1 hover:bg-bg-input transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-[14px] font-semibold text-text1 capitalize">
+            {formatMonthYear(selectedMonth)}
+          </span>
+          <button
+            onClick={() => setSelectedMonth((m) => addMonths(m, 1))}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-text3 hover:text-text1 hover:bg-bg-input transition-colors"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text3" size={15} />
           <input
@@ -144,7 +143,27 @@ export default function TransactionsPage() {
       </div>
 
       {/* List */}
-      {filteredTransactions.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-5">
+          {[1, 2].map((i) => (
+            <div key={i}>
+              <div className="h-3 bg-bg-input rounded animate-pulse w-1/4 mb-2 ml-1" />
+              <div className="bg-bg-input/50 border border-border rounded-[20px] overflow-hidden">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0">
+                    <div className="w-9 h-9 rounded-xl bg-bg-input animate-pulse flex-shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 bg-bg-input rounded animate-pulse w-1/2" />
+                      <div className="h-3 bg-bg-input rounded animate-pulse w-1/4" />
+                    </div>
+                    <div className="h-3.5 bg-bg-input rounded animate-pulse w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredTransactions.length === 0 ? (
         <div className="bg-bg-input/50 border border-border rounded-[20px] py-14 text-center">
           <p className="text-[13px] text-text3">No hay transacciones</p>
           <button

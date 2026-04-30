@@ -207,8 +207,16 @@ export default function FixedExpensesPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-[88px] rounded-[18px] bg-bg-input" />
+      <div className="max-w-lg mx-auto lg:max-w-none space-y-5 animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-bg-input flex-shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-5 bg-bg-input rounded w-28" />
+            <div className="h-3 bg-bg-input rounded w-36" />
+          </div>
+        </div>
+        <div className="h-[90px] rounded-[18px] bg-bg-input" />
+        <div className="h-5 bg-bg-input rounded w-16" />
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {[1, 2, 3].map((i) => (<div key={i} className="h-[164px] rounded-[18px] bg-bg-input" />))}
         </div>

@@ -36,3 +36,14 @@ export function getYearDateRange() {
     end: format(new Date(), 'yyyy-MM-dd'),
   };
 }
+
+export function getDateRangeForMonth(date: Date) {
+  return {
+    start: format(startOfMonth(date), 'yyyy-MM-dd'),
+    end: format(endOfMonth(date), 'yyyy-MM-dd'),
+  };
+}
+
+export function formatMonthYear(date: Date): string {
+  return format(date, 'MMMM yyyy', { locale: es });
+}

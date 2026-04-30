@@ -170,16 +170,6 @@ export default function ReportsPage() {
   const inputDateClass =
     'flex-1 px-3 py-2 bg-bg-input border border-border rounded-[12px] text-[13px] text-text1 focus:outline-none focus:border-border-focus transition-colors';
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-20 bg-bg-input rounded-[20px] animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <PageHeader title="Reportes" subtitle="Análisis de tus gastos" />
@@ -220,6 +210,17 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {isLoading ? (
+        <div className="space-y-3 animate-pulse">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="h-[84px] bg-bg-input rounded-[20px]" />
+            <div className="h-[84px] bg-bg-input rounded-[20px]" />
+          </div>
+          <div className="h-[80px] bg-bg-input rounded-[20px]" />
+          <div className="h-[320px] bg-bg-input rounded-[20px]" />
+        </div>
+      ) : (
+      <>
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-bg-input/50 border border-border rounded-[20px] p-4">
@@ -533,6 +534,8 @@ export default function ReportsPage() {
         <div className="py-12 text-center">
           <p className="text-[14px] text-text3">Sin gastos en este período</p>
         </div>
+      )}
+      </>
       )}
     </div>
   );

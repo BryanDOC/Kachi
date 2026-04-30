@@ -208,10 +208,16 @@ export default function TripsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-lg mx-auto lg:max-w-none space-y-4 animate-pulse">
-        <div className="h-9 rounded-[14px] bg-bg-input w-32" />
-        <div className="h-[200px] rounded-[22px] bg-bg-input" />
-        <div className="h-[200px] rounded-[22px] bg-bg-input" />
+      <div className="max-w-lg mx-auto lg:max-w-none animate-pulse">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-full bg-bg-input flex-shrink-0" />
+          <div className="h-6 bg-bg-input rounded w-16" />
+        </div>
+        <div className="h-6 bg-bg-input rounded w-28 mb-4" />
+        <div className="flex flex-col gap-3.5">
+          <div className="h-[200px] rounded-[22px] bg-bg-input" />
+          <div className="h-[200px] rounded-[22px] bg-bg-input" />
+        </div>
       </div>
     );
   }

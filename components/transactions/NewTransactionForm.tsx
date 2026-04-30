@@ -13,7 +13,7 @@ import { useCurrencies } from '@/lib/hooks/useCurrencies';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useTags } from '@/lib/hooks/useTags';
 import { useTrips } from '@/lib/hooks/useTrips';
-import { TrendingDown, TrendingUp, Plus, X, ChevronDown } from 'lucide-react';
+import { TrendingDown, TrendingUp, Plus, X, ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
@@ -45,9 +45,11 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const { currencies } = useCurrencies();
-  const { categories } = useCategories();
+  const { categories, refetch: refetchCategories } = useCategories();
   const { tags, refetch: refetchTags } = useTags();
   const { activeTrips } = useTrips();
 
@@ -126,6 +128,27 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
     setShowNewTagInput(false);
   };
 
+  const createAndSelectCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name, user_id: user.id, icon: 'Package' })
+      .select('id')
+      .single();
+    if (!error && data) {
+      await refetchCategories();
+      setSelectedCategoryId(data.id);
+      setValue('category_id', data.id);
+      setCategoryOpen(false);
+    }
+    setNewCategoryName('');
+    setShowNewCategoryInput(false);
+  };
+
   const setType = (type: 'expense' | 'income') => {
     setTransactionType(type);
     setValue('type', type);
@@ -139,7 +162,7 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
         type: data.type,
         amount: data.amount,
         currency_id: data.currency_id,
-        category_id: data.type === 'expense' ? (data.category_id || null) : null,
+        category_id: data.category_id || null,
         trip_id: data.trip_id || null,
         description: data.description,
         date: data.date,
@@ -257,12 +280,11 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
 
       <Input label="Fecha" type="date" error={errors.date?.message} {...register('date')} />
 
-      {/* Category (expense only) */}
-      {transactionType === 'expense' && (
-        <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
-            Categoría
-          </label>
+      {/* Categoría */}
+      <div>
+        <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-2">
+          Categoría (opcional)
+        </label>
           <div className="relative">
             <button
               type="button"
@@ -323,6 +345,32 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
                       <span className="text-[14px] truncate">{c.name}</span>
                     </button>
                   ))}
+                  {showNewCategoryInput ? (
+                    <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-border">
+                      <input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); createAndSelectCategory(); }
+                          if (e.key === 'Escape') { setShowNewCategoryInput(false); setNewCategoryName(''); }
+                        }}
+                        placeholder="Nombre..."
+                        className="flex-1 text-[13px] bg-transparent text-text1 placeholder:text-text3 focus:outline-none"
+                      />
+                      <button type="button" onClick={createAndSelectCategory} className="p-1.5 text-accent hover:bg-bg-input rounded-lg transition-colors"><Check size={13} /></button>
+                      <button type="button" onClick={() => { setShowNewCategoryInput(false); setNewCategoryName(''); }} className="p-1.5 text-text3 hover:text-text1 hover:bg-bg-input rounded-lg transition-colors"><X size={13} /></button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCategoryInput(true)}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-text3 hover:bg-bg-input/60 transition-colors border-t border-border"
+                    >
+                      <Plus size={13} />
+                      <span className="text-[13px]">Nueva categoría</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -331,7 +379,6 @@ function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTrans
             <p className="text-[12px] text-[#FF6B6B] mt-1">{errors.category_id.message as string}</p>
           )}
         </div>
-      )}
 
       {/* Tags / chips (expense only) */}
       {transactionType === 'expense' && (

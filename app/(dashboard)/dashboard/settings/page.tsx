@@ -19,10 +19,16 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const PRESET_CURRENCIES = [
+    { code: 'USD', name: 'Dólar estadounidense', symbol: '$' },
+    { code: 'EUR', name: 'Euro', symbol: '€' },
+    { code: 'PEN', name: 'Sol peruano', symbol: 'S/' },
+  ];
+
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loadingCurrencies, setLoadingCurrencies] = useState(true);
   const [addCurrModal, setAddCurrModal] = useState(false);
-  const [currForm, setCurrForm] = useState({ code: '', name: '', symbol: '' });
+  const [selectedCurrCode, setSelectedCurrCode] = useState('');
   const [savingCurr, setSavingCurr] = useState(false);
 
   const [deleteModal, setDeleteModal] = useState(false);
@@ -143,18 +149,25 @@ export default function SettingsPage() {
   };
 
   const addCurrency = async () => {
-    if (!currForm.code.trim() || !currForm.name.trim() || !currForm.symbol.trim()) {
-      toast.error('Todos los campos son requeridos');
+    const preset = PRESET_CURRENCIES.find((p) => p.code === selectedCurrCode);
+    if (!preset) {
+      toast.error('Selecciona una divisa');
       return;
     }
     setSavingCurr(true);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data, error } = await supabase
       .from('currencies')
       .insert({
-        code: currForm.code.trim().toUpperCase(),
-        name: currForm.name.trim(),
-        symbol: currForm.symbol.trim(),
+        code: preset.code,
+        name: preset.name,
+        symbol: preset.symbol,
         is_default: false,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -164,7 +177,7 @@ export default function SettingsPage() {
     } else {
       setCurrencies((prev) => [...prev, data]);
       setAddCurrModal(false);
-      setCurrForm({ code: '', name: '', symbol: '' });
+      setSelectedCurrCode('');
       toast.success('Divisa agregada');
     }
     setSavingCurr(false);
@@ -276,13 +289,15 @@ export default function SettingsPage() {
       <section className="bg-bg-input/50 border border-border rounded-[20px] p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-text1">Divisas</h2>
-          <button
-            onClick={() => setAddCurrModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border text-text2 rounded-[10px] hover:border-border-focus transition-colors text-[13px]"
-          >
-            <Plus size={13} />
-            Agregar
-          </button>
+          {PRESET_CURRENCIES.some((p) => !currencies.some((c) => c.code === p.code)) && (
+            <button
+              onClick={() => setAddCurrModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border text-text2 rounded-[10px] hover:border-border-focus transition-colors text-[13px]"
+            >
+              <Plus size={13} />
+              Agregar
+            </button>
+          )}
         </div>
 
         {loadingCurrencies ? (
@@ -365,52 +380,44 @@ export default function SettingsPage() {
       {/* Add currency modal */}
       <Modal
         isOpen={addCurrModal}
-        onClose={() => setAddCurrModal(false)}
+        onClose={() => {
+          setAddCurrModal(false);
+          setSelectedCurrCode('');
+        }}
         title="Agregar divisa"
         size="sm"
       >
         <div className="space-y-4">
           <div>
-            <label className={labelClass}>
-              Código <span className="text-text3/60 normal-case tracking-normal">(ej: EUR)</span>
-            </label>
-            <input
-              value={currForm.code}
-              onChange={(e) => setCurrForm((f) => ({ ...f, code: e.target.value }))}
-              placeholder="USD"
-              maxLength={5}
-              className={cn(inputClass, 'uppercase')}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Nombre</label>
-            <input
-              value={currForm.name}
-              onChange={(e) => setCurrForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Euro"
+            <label className={labelClass}>Divisa</label>
+            <select
+              value={selectedCurrCode}
+              onChange={(e) => setSelectedCurrCode(e.target.value)}
               className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Símbolo</label>
-            <input
-              value={currForm.symbol}
-              onChange={(e) => setCurrForm((f) => ({ ...f, symbol: e.target.value }))}
-              placeholder="€"
-              maxLength={5}
-              className={inputClass}
-            />
+            >
+              <option value="">Selecciona una divisa</option>
+              {PRESET_CURRENCIES.filter((p) => !currencies.some((c) => c.code === p.code)).map(
+                (p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.symbol} — {p.code} · {p.name}
+                  </option>
+                )
+              )}
+            </select>
           </div>
           <div className="flex gap-3 pt-1">
             <button
-              onClick={() => setAddCurrModal(false)}
+              onClick={() => {
+                setAddCurrModal(false);
+                setSelectedCurrCode('');
+              }}
               className="flex-1 px-4 py-2.5 bg-bg-input border border-border text-text2 rounded-[12px] hover:border-border-focus transition-colors text-[13px] font-medium"
             >
               Cancelar
             </button>
             <button
               onClick={addCurrency}
-              disabled={savingCurr}
+              disabled={savingCurr || !selectedCurrCode}
               className="flex-1 px-4 py-2.5 bg-accent text-bg rounded-[12px] hover:opacity-85 transition-opacity text-[13px] font-semibold disabled:opacity-50"
             >
               {savingCurr ? 'Guardando...' : 'Agregar'}

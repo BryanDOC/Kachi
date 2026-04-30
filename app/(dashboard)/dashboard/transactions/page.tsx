@@ -28,7 +28,7 @@ function groupByDate(transactions: TransactionWithRelations[]) {
 }
 
 export default function TransactionsPage() {
-  const { openTxSheet, txVersion } = useUI();
+  const { openTxSheet, openEditTxSheet, txVersion } = useUI();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -176,6 +176,7 @@ export default function TransactionsPage() {
                     iconName={transaction.categories?.icon ?? null}
                     amount={formatCurrency(transaction.amount, transaction.currencies?.code || 'PEN')}
                     type={transaction.type as 'income' | 'expense'}
+                    onEdit={() => openEditTxSheet(transaction)}
                     onDelete={() => {
                       setSelectedTransaction(transaction);
                       setShowDeleteModal(true);

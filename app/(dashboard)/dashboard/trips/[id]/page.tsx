@@ -1,15 +1,28 @@
 'use client';
 
+import { useState, useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { tripSchema, type TripFormData } from '@/lib/validations/trip.schema';
 import { useTrip, useTripTransactions } from '@/lib/hooks/useTrips';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/date';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUI } from '@/lib/context/ui-context';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { TransactionRow } from '@/components/ui/TransactionRow';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Image from 'next/image';
 
 const STATUS_BADGE = {
   active: {
@@ -37,9 +50,75 @@ function formatTripDates(start: string | null, end: string | null): string {
 
 export default function TripDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { openTxSheet, txVersion } = useUI();
-  const { trip, isLoading: tripLoading } = useTrip(id);
+  const router = useRouter();
+  const { openTxSheet, openEditTxSheet, txVersion } = useUI();
+  const { trip, isLoading: tripLoading, refetch: refetchTrip } = useTrip(id);
   const { transactions, totalSpent, byCategory, isLoading: txLoading } = useTripTransactions(id, txVersion);
+
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<TripFormData>({
+    resolver: zodResolver(tripSchema),
+  });
+
+  const openEdit = () => {
+    if (!trip) return;
+    reset({ name: trip.name, description: trip.description || null, start_date: trip.start_date || null, end_date: trip.end_date || null, status: trip.status });
+    setCoverPreview(trip.cover_image || null);
+    setCoverImage(null);
+    setEditSheetOpen(true);
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true);
+      const supabase = createClient();
+      const ext = file.name.split('.').pop();
+      const { error } = await supabase.storage.from('trip-covers').upload(`${id}.${ext}`, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('trip-covers').getPublicUrl(`${id}.${ext}`);
+      return publicUrl;
+    } catch { return null; }
+    finally { setIsUploading(false); }
+  };
+
+  const onEditSubmit = async (data: TripFormData) => {
+    setIsSaving(true);
+    try {
+      const supabase = createClient();
+      const payload = { name: data.name, description: data.description || null, start_date: data.start_date || null, end_date: data.end_date || null, status: data.status };
+      const { error } = await supabase.from('trips').update(payload).eq('id', id);
+      if (error) throw error;
+      if (coverImage) {
+        const url = await uploadImage(coverImage);
+        if (url) await supabase.from('trips').update({ cover_image: url }).eq('id', id);
+      }
+      toast.success('Viaje actualizado');
+      setEditSheetOpen(false);
+      refetchTrip();
+    } catch { toast.error('Error al actualizar viaje'); }
+    finally { setIsSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('transactions').update({ trip_id: null }).eq('trip_id', id);
+      const { error } = await supabase.from('trips').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Viaje eliminado');
+      router.push('/dashboard/trips');
+    } catch { toast.error('Error al eliminar viaje'); }
+    finally { setIsDeleting(false); }
+  };
 
   const isLoading = tripLoading || txLoading;
   const pieData = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
@@ -79,6 +158,14 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+        <div className="absolute top-3 right-3 flex gap-2">
+          <button onClick={openEdit} className="w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center hover:bg-black/60 transition-colors">
+            <Pencil size={13} className="text-white" />
+          </button>
+          <button onClick={() => setDeleteModalOpen(true)} className="w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center hover:bg-black/60 transition-colors">
+            <Trash2 size={13} className="text-white" />
+          </button>
+        </div>
         <div className="absolute bottom-0 left-0 right-0 p-5">
           <span
             className={cn(
@@ -236,11 +323,67 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
                 iconName={tx.categories?.icon ?? null}
                 amount={formatCurrency(tx.amount, tx.currencies?.code || 'PEN')}
                 type={tx.type as 'income' | 'expense'}
+                onEdit={() => openEditTxSheet(tx)}
               />
             ))}
           </div>
         )}
       </div>
+      {/* Edit trip sheet */}
+      <BottomSheet isOpen={editSheetOpen} onClose={() => setEditSheetOpen(false)} title="Editar viaje">
+        <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-4">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={cn('relative h-36 rounded-[14px] border-2 border-dashed cursor-pointer transition-colors overflow-hidden', coverPreview ? 'border-transparent' : 'border-border hover:border-border-focus bg-bg-input')}
+          >
+            {coverPreview ? (
+              <>
+                <Image src={coverPreview} alt="Cover" fill className="object-cover" />
+                <button type="button" onClick={(e) => { e.stopPropagation(); setCoverImage(null); setCoverPreview(null); }} className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full">
+                  <X size={14} className="text-white" />
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-text3">
+                <Upload size={24} />
+                <span className="text-[13px]">Cambiar portada</span>
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setCoverImage(f); const r = new FileReader(); r.onloadend = () => setCoverPreview(r.result as string); r.readAsDataURL(f); }}} className="hidden" />
+          </div>
+          <Input label="Nombre" error={errors.name?.message} {...register('name')} />
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.6px] text-text3 mb-1.5">Descripción (opcional)</label>
+            <textarea rows={2} className="w-full px-4 py-2.5 bg-bg-input border border-border rounded-[14px] text-text1 placeholder:text-text3 focus:outline-none focus:border-border-focus text-[13px] transition-colors" {...register('description')} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Inicio" type="date" {...register('start_date')} />
+            <Input label="Fin" type="date" {...register('end_date')} />
+          </div>
+          <Select label="Estado" {...register('status')}>
+            <option value="active">Activo</option>
+            <option value="completed">Completado</option>
+            <option value="cancelled">Cancelado</option>
+          </Select>
+          <div className="flex gap-3 pt-1">
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => setEditSheetOpen(false)}>Cancelar</Button>
+            <Button type="submit" variant="primary" className="flex-1" isLoading={isSaving || isUploading}>Guardar</Button>
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* Delete confirm modal */}
+      <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Eliminar viaje" size="sm">
+        <div className="space-y-4">
+          <p className="text-[14px] text-text2">¿Eliminar <span className="font-semibold text-text1">{trip?.name}</span>? Las transacciones se mantendrán sin viaje asignado.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteModalOpen(false)} className="flex-1 h-11 rounded-[12px] bg-bg-input border border-border text-text2 text-[13px] font-medium hover:border-border-focus transition-colors">Cancelar</button>
+            <button onClick={handleDelete} disabled={isDeleting} className="flex-1 h-11 rounded-[12px] bg-[#FF4444] text-white text-[13px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

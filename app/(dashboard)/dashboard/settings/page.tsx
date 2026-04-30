@@ -8,10 +8,12 @@ import { toast } from 'sonner';
 import { Plus, Trash2, Star, User, AlertTriangle, LogOut } from 'lucide-react';
 import { Currency, Profile } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useUI } from '@/lib/context/ui-context';
 
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { updateUserProfile } = useUI();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState('');
@@ -76,6 +78,7 @@ export default function SettingsPage() {
     } else {
       toast.success('Perfil actualizado');
       setProfile((p) => (p ? { ...p, full_name: fullName.trim() } : p));
+      updateUserProfile({ fullName: fullName.trim() });
     }
     setSavingProfile(false);
   };
@@ -109,6 +112,7 @@ export default function SettingsPage() {
       toast.error('Error al actualizar avatar');
     } else {
       setProfile((p) => (p ? { ...p, avatar_url: publicUrl } : p));
+      updateUserProfile({ avatarUrl: publicUrl });
       toast.success('Avatar actualizado');
     }
     setUploadingAvatar(false);

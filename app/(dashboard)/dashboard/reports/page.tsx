@@ -7,52 +7,25 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { formatCurrency } from '@/lib/utils/currency';
 import { getMonthDateRange, getQuarterDateRange, getYearDateRange } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
-import {
-  format,
-  eachMonthOfInterval,
-  eachWeekOfInterval,
-  parseISO,
-  isWithinInterval,
-  endOfMonth,
-  endOfWeek,
-} from 'date-fns';
-import { es } from 'date-fns/locale';
-import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { X, Tag } from 'lucide-react';
+import { TransactionWithRelations } from '@/types';
+import { PageHeader } from '@/components/ui/PageHeader';
+
+const ACTIVE_STYLE = { background: 'var(--card-bg)' } as const;
 
 type Period = 'month' | 'quarter' | 'year' | 'custom';
 
 const PERIOD_LABELS: Record<Period, string> = {
   month: 'Este mes',
-  quarter: 'Último trimestre',
+  quarter: 'Trimestre',
   year: 'Este año',
-  custom: 'Personalizado',
+  custom: 'Custom',
 };
 
-const DEFAULT_COLORS = [
-  '#f59e0b',
-  '#3b82f6',
-  '#10b981',
-  '#ef4444',
-  '#8b5cf6',
-  '#f97316',
-  '#06b6d4',
-  '#84cc16',
-  '#ec4899',
-  '#14b8a6',
+const FALLBACK_COLORS = [
+  '#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6',
+  '#f97316', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6',
 ];
 
 function getDateRange(period: Period, customStart?: string, customEnd?: string) {
@@ -63,77 +36,64 @@ function getDateRange(period: Period, customStart?: string, customEnd?: string) 
   return getMonthDateRange();
 }
 
-const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
-      <p className="text-zinc-400 text-xs mb-2">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color }} className="text-sm font-medium">
-          {entry.name}: {formatCurrency(entry.value, 'PEN')}
-        </p>
-      ))}
-    </div>
-  );
-};
+function getTxTagIds(t: TransactionWithRelations): string[] {
+  const ids: string[] = [];
+  t.transaction_tags?.forEach((tt) => {
+    if (tt.subcategories) ids.push(tt.subcategories.id);
+  });
+  if (t.subcategories) ids.push(t.subcategories.id);
+  return ids.filter((id, i) => ids.indexOf(id) === i);
+}
+
+function getTxTagNames(t: TransactionWithRelations): string[] {
+  const names: string[] = [];
+  t.transaction_tags?.forEach((tt) => {
+    if (tt.subcategories) names.push(tt.subcategories.name);
+  });
+  if (t.subcategories && !names.includes(t.subcategories.name)) names.push(t.subcategories.name);
+  return names;
+}
 
 export default function ReportsPage() {
   const { txVersion } = useUI();
   const [period, setPeriod] = useState<Period>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const { start, end } = useMemo(
     () => getDateRange(period, customStart, customEnd),
     [period, customStart, customEnd]
   );
 
-  const { transactions, isLoading } = useTransactions({ startDate: start, endDate: end, version: txVersion });
+  const { transactions, isLoading } = useTransactions({
+    startDate: start,
+    endDate: end,
+    version: txVersion,
+  });
   const { categories } = useCategories();
 
   const expenses = useMemo(() => transactions.filter((t) => t.type === 'expense'), [transactions]);
   const incomeList = useMemo(() => transactions.filter((t) => t.type === 'income'), [transactions]);
   const totalExpenses = useMemo(() => expenses.reduce((s, t) => s + t.amount, 0), [expenses]);
+  const totalIncome = useMemo(() => incomeList.reduce((s, t) => s + t.amount, 0), [incomeList]);
 
-  // A. Monthly Balance
-  const monthlyData = useMemo(() => {
-    try {
-      const startDate = parseISO(start);
-      const endDate = parseISO(end);
-      const months = eachMonthOfInterval({ start: startDate, end: endDate });
-      return months.map((monthStart) => {
-        const monthEnd = endOfMonth(monthStart);
-        const interval = { start: monthStart, end: monthEnd };
-        const monthIncome = incomeList
-          .filter((t) => isWithinInterval(parseISO(t.date), interval))
-          .reduce((s, t) => s + t.amount, 0);
-        const monthExpenses = expenses
-          .filter((t) => isWithinInterval(parseISO(t.date), interval))
-          .reduce((s, t) => s + t.amount, 0);
-        return {
-          month: format(monthStart, 'MMM', { locale: es }),
-          Ingresos: monthIncome,
-          Gastos: monthExpenses,
-          Balance: monthIncome - monthExpenses,
-        };
-      });
-    } catch {
-      return [];
-    }
-  }, [expenses, incomeList, start, end]);
+  const defaultCurrency = transactions[0]?.currencies?.code || 'PEN';
+  const fmt = (v: number) => formatCurrency(v, defaultCurrency);
 
-  // B. Donut chart data
-  const categoryDonutData = useMemo(() => {
-    const map: Record<string, { name: string; value: number; color: string }> = {};
+  // Category breakdown data (all expenses, no filter)
+  const categoryData = useMemo(() => {
+    const map: Record<string, { id: string; name: string; value: number; color: string }> = {};
     expenses.forEach((t) => {
       const cat = t.categories;
       if (!cat) return;
       if (!map[cat.id]) {
         map[cat.id] = {
+          id: cat.id,
           name: cat.name,
           value: 0,
-          color: cat.color || DEFAULT_COLORS[Object.keys(map).length % DEFAULT_COLORS.length],
+          color: cat.color || FALLBACK_COLORS[Object.keys(map).length % FALLBACK_COLORS.length],
         };
       }
       map[cat.id].value += t.amount;
@@ -141,416 +101,437 @@ export default function ReportsPage() {
     return Object.values(map).sort((a, b) => b.value - a.value);
   }, [expenses]);
 
-  // C. Category trend
-  const trendCategories = useMemo(
-    () => Array.from(new Set(expenses.map((t) => t.categories?.name).filter(Boolean))) as string[],
-    [expenses]
+  // Expenses filtered only by category (for tag totals)
+  const categoryFilteredExpenses = useMemo(
+    () => expenses.filter((t) => !selectedCategoryId || t.category_id === selectedCategoryId),
+    [expenses, selectedCategoryId]
   );
 
-  const categoryColors = useMemo(() => {
-    const map: Record<string, string> = {};
-    trendCategories.forEach((name, i) => {
-      const cat = categories.find((c) => c.name === name);
-      map[name] = cat?.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length];
-    });
-    return map;
-  }, [trendCategories, categories]);
-
-  const trendData = useMemo(() => {
-    try {
-      const startDate = parseISO(start);
-      const endDate = parseISO(end);
-      const diffDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-      const useWeeks = diffDays <= 45;
-
-      const buckets = useWeeks
-        ? eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 })
-        : eachMonthOfInterval({ start: startDate, end: endDate });
-
-      return buckets.map((bucketStart, i) => {
-        const bucketEnd = useWeeks
-          ? endOfWeek(bucketStart, { weekStartsOn: 1 })
-          : endOfMonth(bucketStart);
-        const interval = { start: bucketStart, end: bucketEnd };
-        const label = useWeeks
-          ? `S${i + 1} ${format(bucketStart, 'dd/MM')}`
-          : format(bucketStart, 'MMM', { locale: es });
-
-        const entry: Record<string, string | number> = { period: label };
-        trendCategories.forEach((name) => {
-          entry[name] = expenses
-            .filter(
-              (t) =>
-                t.categories?.name === name && isWithinInterval(parseISO(t.date), interval)
-            )
-            .reduce((s, t) => s + t.amount, 0);
-        });
-        return entry;
+  // All unique tags appearing in categoryFilteredExpenses
+  const availableTags = useMemo(() => {
+    const map: Record<string, { id: string; name: string }> = {};
+    categoryFilteredExpenses.forEach((t) => {
+      t.transaction_tags?.forEach((tt) => {
+        if (tt.subcategories && !map[tt.subcategories.id]) {
+          map[tt.subcategories.id] = { id: tt.subcategories.id, name: tt.subcategories.name };
+        }
       });
-    } catch {
-      return [];
-    }
-  }, [expenses, trendCategories, start, end]);
-
-  // D. Top subcategories
-  const subcategoryData = useMemo(() => {
-    const map: Record<string, { name: string; category: string; total: number }> = {};
-    expenses.forEach((t) => {
-      const sub = t.subcategories;
-      if (!sub) return;
-      if (!map[sub.id]) {
-        map[sub.id] = { name: sub.name, category: t.categories?.name || '—', total: 0 };
+      if (t.subcategories && !map[t.subcategories.id]) {
+        map[t.subcategories.id] = { id: t.subcategories.id, name: t.subcategories.name };
       }
-      map[sub.id].total += t.amount;
     });
-    return Object.values(map)
-      .sort((a, b) => b.total - a.total)
-      .map((row) => ({
-        ...row,
-        pct: totalExpenses > 0 ? (row.total / totalExpenses) * 100 : 0,
-      }));
-  }, [expenses, totalExpenses]);
+    return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+  }, [categoryFilteredExpenses]);
 
-  // E. Fixed vs Variable
-  const fixedTotal = useMemo(
-    () => expenses.filter((t) => t.fixed_expense_id).reduce((s, t) => s + t.amount, 0),
-    [expenses]
-  );
-  const variableTotal = useMemo(
-    () => expenses.filter((t) => !t.fixed_expense_id).reduce((s, t) => s + t.amount, 0),
-    [expenses]
-  );
-
-  // Budget progress
-  const budgetCategories = useMemo(
-    () =>
-      categories
-        .filter((c) => c.budget_limit !== null && c.budget_limit > 0)
-        .map((cat) => {
-          const spent = expenses
-            .filter((t) => t.category_id === cat.id)
-            .reduce((s, t) => s + t.amount, 0);
-          const pct = (spent / cat.budget_limit!) * 100;
-          return { ...cat, spent, pct };
-        }),
-    [categories, expenses]
-  );
-
-  const toggleLine = (key: string) => {
-    setHiddenLines((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      return next;
-    });
-  };
-
-  const DonutTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[] }) => {
-    if (!active || !payload?.length) return null;
-    const entry = payload[0];
-    const pct = totalExpenses > 0 ? ((entry.value / totalExpenses) * 100).toFixed(1) : '0';
-    return (
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
-        <p className="text-white text-sm font-medium">{entry.name}</p>
-        <p className="text-zinc-300 text-sm">{formatCurrency(entry.value, 'PEN')}</p>
-        <p className="text-zinc-500 text-xs">{pct}% del total</p>
-      </div>
+  // Expenses filtered by category + tags (union on tags)
+  const filteredExpenses = useMemo(() => {
+    if (selectedTagIds.length === 0) return categoryFilteredExpenses;
+    return categoryFilteredExpenses.filter((t) =>
+      getTxTagIds(t).some((id) => selectedTagIds.includes(id))
     );
+  }, [categoryFilteredExpenses, selectedTagIds]);
+
+  const filteredTotal = useMemo(
+    () => filteredExpenses.reduce((s, t) => s + t.amount, 0),
+    [filteredExpenses]
+  );
+
+  // Per-tag totals from categoryFilteredExpenses (independent of tag filter)
+  const tagBreakdown = useMemo(() => {
+    const map: Record<string, { id: string; name: string; total: number }> = {};
+    categoryFilteredExpenses.forEach((t) => {
+      getTxTagIds(t).forEach((tagId) => {
+        const tag = availableTags.find((at) => at.id === tagId);
+        if (!tag) return;
+        if (!map[tagId]) map[tagId] = { id: tagId, name: tag.name, total: 0 };
+        map[tagId].total += t.amount;
+      });
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [categoryFilteredExpenses, availableTags]);
+
+  const hasFilters = selectedCategoryId !== null || selectedTagIds.length > 0;
+
+  const toggleTag = (id: string) =>
+    setSelectedTagIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+
+  const selectCategory = (id: string | null) => {
+    setSelectedCategoryId(id);
+    setSelectedTagIds([]);
   };
+
+  const clearFilters = () => {
+    setSelectedCategoryId(null);
+    setSelectedTagIds([]);
+  };
+
+  const inputDateClass =
+    'flex-1 px-3 py-2 bg-bg-input border border-border rounded-[12px] text-[13px] text-text1 focus:outline-none focus:border-border-focus transition-colors';
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 bg-zinc-900 rounded-lg animate-pulse w-48" />
-        <div className="h-10 bg-zinc-900 rounded-lg animate-pulse w-96" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-72 bg-zinc-900 rounded-xl animate-pulse" />
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-20 bg-bg-input rounded-[20px] animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Reportes</h1>
-        <p className="text-zinc-400">Visualización de gastos e ingresos por período</p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader title="Reportes" subtitle="Análisis de tus gastos" />
 
       {/* Period selector */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none -mx-4 px-4">
         {(['month', 'quarter', 'year', 'custom'] as Period[]).map((p) => (
           <button
             key={p}
             onClick={() => setPeriod(p)}
+            style={period === p ? ACTIVE_STYLE : undefined}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+              'px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0 transition-colors',
               period === p
-                ? 'bg-amber-500 text-black'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                ? 'text-bg'
+                : 'bg-bg-input border border-border text-text2 hover:border-border-focus'
             )}
           >
             {PERIOD_LABELS[p]}
           </button>
         ))}
-        {period === 'custom' && (
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white"
-            />
-            <span className="text-zinc-500">—</span>
-            <input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white"
-            />
-          </div>
-        )}
       </div>
 
-      {/* E. Fixed vs Variable */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <p className="text-zinc-400 text-sm mb-1">Gastos fijos</p>
-          <p className="text-2xl font-serif font-bold text-white">
-            {formatCurrency(fixedTotal, 'PEN')}
+      {period === 'custom' && (
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className={inputDateClass}
+          />
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className={inputDateClass}
+          />
+        </div>
+      )}
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-bg-input/50 border border-border rounded-[20px] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-text3 mb-1.5">
+            Gastos
           </p>
+          <p className="text-[20px] font-bold text-text1 leading-none">{fmt(totalExpenses)}</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <p className="text-zinc-400 text-sm mb-1">Gastos variables</p>
-          <p className="text-2xl font-serif font-bold text-white">
-            {formatCurrency(variableTotal, 'PEN')}
+        <div className="bg-bg-input/50 border border-border rounded-[20px] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-text3 mb-1.5">
+            Ingresos
           </p>
+          <p className="text-[20px] font-bold text-[#10b981] leading-none">{fmt(totalIncome)}</p>
         </div>
       </div>
 
-      {/* A. Monthly Balance Bar Chart */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-6">Balance mensual</h2>
-        {monthlyData.length === 0 ? (
-          <p className="text-zinc-500 text-center py-12">Sin datos para el período</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-              <XAxis
-                dataKey="month"
-                tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                axisLine={{ stroke: '#3f3f46' }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                axisLine={{ stroke: '#3f3f46' }}
-                tickLine={false}
-                tickFormatter={(v) => `S/ ${v}`}
-              />
-              <Tooltip content={<CurrencyTooltip />} />
-              <Legend wrapperStyle={{ color: '#a1a1aa', fontSize: 12 }} />
-              <Bar dataKey="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              <Bar dataKey="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              <Line
-                dataKey="Balance"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                dot={{ fill: '#f59e0b', r: 4 }}
-                type="monotone"
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {/* B. Donut + C. Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* B. Category Donut */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-6">Gastos por categoría</h2>
-          {categoryDonutData.length === 0 ? (
-            <p className="text-zinc-500 text-center py-12">Sin gastos en el período</p>
-          ) : (
-            <>
-              <div className="relative">
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={categoryDonutData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="52%"
-                      outerRadius="78%"
-                      dataKey="value"
-                      nameKey="name"
-                      paddingAngle={2}
-                    >
-                      {categoryDonutData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<DonutTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xs text-zinc-500">Total</p>
-                  <p className="text-base font-bold text-white">
-                    {formatCurrency(totalExpenses, 'PEN')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4">
-                {categoryDonutData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-1.5">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-xs text-zinc-400">{entry.name}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* C. Category Trend Line Chart */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-6">Tendencia por categoría</h2>
-          {trendCategories.length === 0 ? (
-            <p className="text-zinc-500 text-center py-12">Sin gastos en el período</p>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                  <XAxis
-                    dataKey="period"
-                    tick={{ fill: '#a1a1aa', fontSize: 11 }}
-                    axisLine={{ stroke: '#3f3f46' }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: '#a1a1aa', fontSize: 11 }}
-                    axisLine={{ stroke: '#3f3f46' }}
-                    tickLine={false}
-                    tickFormatter={(v) => `S/ ${v}`}
-                  />
-                  <Tooltip content={<CurrencyTooltip />} />
-                  {trendCategories.map((name) => (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={categoryColors[name]}
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: categoryColors[name] }}
-                      hide={hiddenLines.has(name)}
-                      connectNulls
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-              <div className="flex flex-wrap gap-2 mt-4">
-                {trendCategories.map((name) => (
-                  <button
-                    key={name}
-                    onClick={() => toggleLine(name)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-opacity hover:opacity-80',
-                      hiddenLines.has(name) ? 'opacity-30' : 'opacity-100'
-                    )}
-                  >
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: categoryColors[name] }}
-                    />
-                    <span className="text-zinc-400">{name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* D. Top Subcategories Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-6">Top subcategorías</h2>
-        {subcategoryData.length === 0 ? (
-          <p className="text-zinc-500 text-center py-8">Sin subcategorías en el período</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="pb-3 text-left text-zinc-500 font-medium">Subcategoría</th>
-                  <th className="pb-3 text-left text-zinc-500 font-medium">Categoría</th>
-                  <th className="pb-3 text-right text-zinc-500 font-medium">Total</th>
-                  <th className="pb-3 text-right text-zinc-500 font-medium">% del total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subcategoryData.map((row) => (
-                  <tr
-                    key={row.name}
-                    className={cn(
-                      'border-b border-zinc-800/50',
-                      row.pct > 20 && 'bg-amber-500/5'
-                    )}
-                  >
-                    <td className="py-3 text-white font-medium">
-                      {row.name}
-                      {row.pct > 20 && <span className="ml-2 text-amber-500 text-xs">▲</span>}
-                    </td>
-                    <td className="py-3 text-zinc-400">{row.category}</td>
-                    <td className="py-3 text-right text-white">
-                      {formatCurrency(row.total, 'PEN')}
-                    </td>
-                    <td className="py-3 text-right">
-                      <span
-                        className={cn(
-                          'font-medium',
-                          row.pct > 20 ? 'text-amber-500' : 'text-zinc-400'
-                        )}
-                      >
-                        {row.pct.toFixed(1)}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Budget progress bars */}
-      {budgetCategories.length > 0 && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-6">Progreso de presupuesto</h2>
-          <div className="space-y-5">
-            {budgetCategories.map((cat) => (
-              <div key={cat.id}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-zinc-300">{cat.name}</span>
-                  <span className="text-sm text-zinc-500">
-                    {formatCurrency(cat.spent, 'PEN')} / {formatCurrency(cat.budget_limit!, 'PEN')}
+      {/* Category filter */}
+      <section className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+        <span className="text-[13px] font-semibold text-text1">Categorías</span>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => selectCategory(null)}
+            style={!selectedCategoryId ? ACTIVE_STYLE : undefined}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors',
+              !selectedCategoryId
+                ? 'text-bg'
+                : 'bg-bg-input border border-border text-text2 hover:border-border-focus'
+            )}
+          >
+            Todas
+          </button>
+          {categories.map((cat) => {
+            const catData = categoryData.find((c) => c.id === cat.id);
+            const isActive = selectedCategoryId === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => selectCategory(isActive ? null : cat.id)}
+                style={isActive ? ACTIVE_STYLE : undefined}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors',
+                  isActive
+                    ? 'text-bg'
+                    : 'bg-bg-input border border-border text-text2 hover:border-border-focus'
+                )}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color || '#888' }}
+                />
+                {cat.name}
+                {catData && (
+                  <span className={cn('text-[11px]', isActive ? 'opacity-70' : 'text-text3')}>
+                    {fmt(catData.value)}
                   </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Tag filter */}
+      {availableTags.length > 0 && (
+        <section className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-semibold text-text1 flex items-center gap-2">
+              <Tag size={13} className="text-accent" />
+              Tags
+            </span>
+            {selectedTagIds.length > 0 && (
+              <button
+                onClick={() => setSelectedTagIds([])}
+                className="text-[12px] text-text3 hover:text-text2 transition-colors"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {availableTags.map((tag) => {
+              const isActive = selectedTagIds.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => toggleTag(tag.id)}
+                  style={isActive ? ACTIVE_STYLE : undefined}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors',
+                    isActive
+                      ? 'text-bg'
+                      : 'bg-bg-input border border-border text-text2 hover:border-border-focus'
+                  )}
+                >
+                  {tag.name}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Filtered result card */}
+      {hasFilters && (
+        <div className="bg-bg-input/50 border border-border rounded-[20px] p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-text3">
+              {selectedTagIds.length > 0
+                ? `${selectedTagIds.length} tag${selectedTagIds.length > 1 ? 's' : ''} seleccionado${selectedTagIds.length > 1 ? 's' : ''}`
+                : categories.find((c) => c.id === selectedCategoryId)?.name}
+            </p>
+            <p className="text-[22px] font-bold text-text1 mt-0.5 leading-none">{fmt(filteredTotal)}</p>
+            <p className="text-[12px] text-text3 mt-1">
+              {filteredExpenses.length} transacción{filteredExpenses.length !== 1 ? 'es' : ''}
+              {totalExpenses > 0 &&
+                ` · ${((filteredTotal / totalExpenses) * 100).toFixed(1)}% del total`}
+            </p>
+          </div>
+          <button
+            onClick={clearFilters}
+            className="p-2 bg-bg-input border border-border rounded-[10px] text-text3 hover:text-text2 hover:border-border-focus transition-colors flex-shrink-0"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Category breakdown — shown when no specific category selected */}
+      {!selectedCategoryId && categoryData.length > 0 && (
+        <section className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-4">
+          <h2 className="text-[13px] font-semibold text-text1">Por categoría</h2>
+
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="50%"
+                  outerRadius="72%"
+                  dataKey="value"
+                  nameKey="name"
+                  paddingAngle={2}
+                >
+                  {categoryData.map((entry) => (
+                    <Cell key={entry.id} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const e = payload[0];
+                    const pct =
+                      totalExpenses > 0
+                        ? (((e.value as number) / totalExpenses) * 100).toFixed(1)
+                        : '0';
+                    return (
+                      <div className="bg-bg-input border border-border rounded-[12px] p-2.5 shadow-xl">
+                        <p className="text-[13px] font-medium text-text1">{e.name}</p>
+                        <p className="text-[12px] text-text2">
+                          {fmt(e.value as number)} · {pct}%
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-[10px] text-text3">Total</p>
+              <p className="text-[14px] font-bold text-text1">{fmt(totalExpenses)}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {categoryData.map((cat) => (
+              <div key={cat.id} className="flex items-center gap-3">
+                <div
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[13px] text-text1 truncate">{cat.name}</span>
+                    <span className="text-[13px] font-semibold text-text1 flex-shrink-0">
+                      {fmt(cat.value)}
+                    </span>
+                  </div>
+                  <div className="h-1 bg-bg-input rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${totalExpenses > 0 ? (cat.value / totalExpenses) * 100 : 0}%`,
+                        backgroundColor: cat.color,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all duration-500',
-                      cat.pct < 60 ? 'bg-green-500' : cat.pct < 90 ? 'bg-yellow-500' : 'bg-red-500'
-                    )}
-                    style={{ width: `${Math.min(cat.pct, 100)}%` }}
-                  />
-                </div>
+                <span className="text-[11px] text-text3 w-8 text-right flex-shrink-0">
+                  {totalExpenses > 0 ? ((cat.value / totalExpenses) * 100).toFixed(0) : 0}%
+                </span>
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Tag breakdown */}
+      {tagBreakdown.length > 0 && (
+        <section className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+          <h2 className="text-[13px] font-semibold text-text1">Por tag</h2>
+          <div className="space-y-3">
+            {tagBreakdown.map((tag) => {
+              const base = selectedCategoryId
+                ? categoryFilteredExpenses.reduce((s, t) => s + t.amount, 0)
+                : totalExpenses;
+              const pct = base > 0 ? (tag.total / base) * 100 : 0;
+              const isSelected = selectedTagIds.includes(tag.id);
+              return (
+                <div key={tag.id} className="flex items-center gap-3">
+                  {isSelected && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-accent flex-shrink-0" />
+                  )}
+                  {!isSelected && <div className="w-2.5 h-2.5 flex-shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span
+                        className={cn(
+                          'text-[13px] truncate',
+                          isSelected ? 'text-text1 font-medium' : 'text-text2'
+                        )}
+                      >
+                        {tag.name}
+                      </span>
+                      <span className="text-[13px] font-semibold text-text1 flex-shrink-0">
+                        {fmt(tag.total)}
+                      </span>
+                    </div>
+                    <div className="h-1 bg-bg-input rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-500',
+                          isSelected ? 'bg-accent' : 'bg-text3/40'
+                        )}
+                        style={{ width: `${Math.min(pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-text3 w-8 text-right flex-shrink-0">
+                    {pct.toFixed(0)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Filtered transactions list (when tags selected) */}
+      {selectedTagIds.length > 0 && filteredExpenses.length > 0 && (
+        <section className="bg-bg-input/50 border border-border rounded-[20px] p-4 space-y-3">
+          <h2 className="text-[13px] font-semibold text-text1">
+            Transacciones ({filteredExpenses.length})
+          </h2>
+          <div className="space-y-2">
+            {filteredExpenses.map((t) => {
+              const tagNames = getTxTagNames(t);
+              return (
+                <div
+                  key={t.id}
+                  className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] text-text1 truncate">{t.description}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      {t.categories && (
+                        <span className="text-[11px] text-text3">{t.categories.name}</span>
+                      )}
+                      {tagNames.map((name) => (
+                        <span
+                          key={name}
+                          className={cn(
+                            'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                            selectedTagIds.some(
+                              (id) => availableTags.find((at) => at.id === id)?.name === name
+                            )
+                              ? 'bg-accent/15 text-accent'
+                              : 'bg-bg-input text-text3'
+                          )}
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[13px] font-semibold text-text1">{fmt(t.amount)}</p>
+                    <p className="text-[11px] text-text3">{t.date}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Empty state */}
+      {expenses.length === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-[14px] text-text3">Sin gastos en este período</p>
         </div>
       )}
     </div>

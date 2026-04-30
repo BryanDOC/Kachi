@@ -82,6 +82,7 @@ export interface TransactionWithRelations extends Transaction {
   categories?: Category;
   subcategories?: Subcategory;
   trips?: Trip;
+  transaction_tags?: { subcategories: Subcategory | null }[];
 }
 
 export interface FixedExpenseWithRelations extends FixedExpense {

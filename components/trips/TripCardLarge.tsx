@@ -28,6 +28,7 @@ export interface TripCardLargeProps {
   gradient?: string;
   coverImage?: string | null;
   href: string;
+  onEdit?: () => void;
 }
 
 export function TripCardLarge({
@@ -39,56 +40,69 @@ export function TripCardLarge({
   gradient = 'linear-gradient(135deg, #1a3a2a, #2d6a4f)',
   coverImage,
   href,
+  onEdit,
 }: TripCardLargeProps) {
   const { label, cls } = STATUS[status];
 
   return (
-    <Link
-      href={href}
-      className="block w-full h-[200px] rounded-[22px] relative overflow-hidden transition-transform active:scale-[0.98]"
-    >
-      {coverImage ? (
-        <Image src={coverImage} alt={name} fill className="object-cover" />
-      ) : (
-        <div
-          className="absolute inset-0 flex items-center justify-center text-[80px]"
-          style={{ background: gradient }}
-        >
-          {emoji}
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-      <div className="absolute inset-0 flex flex-col justify-between p-3.5">
-        <div className="flex justify-end">
-          <span className={cn('text-[11px] font-bold px-2.5 py-1 rounded-full tracking-[0.3px]', cls)}>
-            {label}
-          </span>
-        </div>
-        <div>
-          <div className="flex items-center gap-1 text-[12px] text-white/60 mb-1">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
-              <path d="M1 5h10" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
-            </svg>
-            {dates}
+    <div className="relative">
+      <Link
+        href={href}
+        className="block w-full h-[200px] rounded-[22px] relative overflow-hidden transition-transform active:scale-[0.98]"
+      >
+        {coverImage ? (
+          <Image src={coverImage} alt={name} fill className="object-cover" />
+        ) : (
+          <div
+            className="absolute inset-0 flex items-center justify-center text-[80px]"
+            style={{ background: gradient }}
+          >
+            {emoji}
           </div>
-          <p className="font-sans text-[20px] font-semibold text-white mb-1.5">{name}</p>
-          <div className="flex items-center justify-between">
-            <span className="font-sans text-[14px] font-semibold text-white tabular-nums">{totalSpent} gastado</span>
-            <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M3 7h8M8 4l3 3-3 3"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-between p-3.5">
+          <div className="flex justify-end">
+            <span className={cn('text-[11px] font-bold px-2.5 py-1 rounded-full tracking-[0.3px]', cls)}>
+              {label}
+            </span>
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-[12px] text-white/60 mb-1">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
+                <path d="M1 5h10" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
               </svg>
+              {dates}
+            </div>
+            <p className="font-sans text-[20px] font-semibold text-white mb-1.5">{name}</p>
+            <div className="flex items-center justify-between">
+              <span className="font-sans text-[14px] font-semibold text-white tabular-nums">{totalSpent} gastado</span>
+              <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M3 7h8M8 4l3 3-3 3"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {onEdit && (
+        <button
+          onClick={(e) => { e.preventDefault(); onEdit(); }}
+          className="absolute top-3 left-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center hover:bg-black/60 transition-colors"
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M9.5 1.5a1.5 1.5 0 012.121 2.121L4.5 10.742l-3 .758.758-3L9.5 1.5z" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
+    </div>
   );
 }

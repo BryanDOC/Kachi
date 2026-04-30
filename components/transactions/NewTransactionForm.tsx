@@ -17,22 +17,24 @@ import { TrendingDown, TrendingUp, Plus, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
+import { TransactionWithRelations } from '@/types';
 
 interface NewTransactionFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   defaultTripId?: string | null;
+  initialData?: TransactionWithRelations;
 }
 
-export function NewTransactionForm({ onSuccess, onCancel, defaultTripId }: NewTransactionFormProps) {
+export function NewTransactionForm({ onSuccess, onCancel, defaultTripId, initialData }: NewTransactionFormProps) {
   return (
     <Suspense fallback={<div className="space-y-4 animate-pulse">{[1,2,3,4].map(i=><div key={i} className="h-12 rounded-[14px] bg-bg-input"/>)}</div>}>
-      <FormInner onSuccess={onSuccess} onCancel={onCancel} defaultTripId={defaultTripId} />
+      <FormInner onSuccess={onSuccess} onCancel={onCancel} defaultTripId={defaultTripId} initialData={initialData} />
     </Suspense>
   );
 }
 
-function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormProps) {
+function FormInner({ onSuccess, onCancel, defaultTripId, initialData }: NewTransactionFormProps) {
   const searchParams = useSearchParams();
   const tripIdFromUrl = defaultTripId ?? searchParams.get('trip');
 
@@ -54,6 +56,7 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -71,9 +74,32 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
   }, [tripIdFromUrl, setValue]);
 
   useEffect(() => {
+    if (initialData) return;
     const defaultCurrency = currencies.find((c) => c.is_default);
     if (defaultCurrency) setValue('currency_id', defaultCurrency.id);
-  }, [currencies, setValue]);
+  }, [currencies, setValue, initialData]);
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (!initialData) return;
+    setType(initialData.type as 'expense' | 'income');
+    setSelectedCategoryId(initialData.category_id || null);
+    const tagIds: string[] = [];
+    initialData.transaction_tags?.forEach((tt) => { if (tt.subcategories) tagIds.push(tt.subcategories.id); });
+    if (initialData.subcategories) tagIds.push(initialData.subcategories.id);
+    setSelectedTagIds(tagIds.filter((id, i) => tagIds.indexOf(id) === i));
+    reset({
+      type: initialData.type as 'expense' | 'income',
+      amount: initialData.amount,
+      currency_id: initialData.currency_id,
+      category_id: initialData.category_id,
+      trip_id: initialData.trip_id,
+      description: initialData.description,
+      date: initialData.date,
+      notes: initialData.notes,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id]);
 
   const toggleTag = (id: string) => {
     setSelectedTagIds((prev) =>
@@ -109,37 +135,52 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
     setIsLoading(true);
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error('No estás autenticado'); return; }
+      const payload = {
+        type: data.type,
+        amount: data.amount,
+        currency_id: data.currency_id,
+        category_id: data.type === 'expense' ? (data.category_id || null) : null,
+        trip_id: data.trip_id || null,
+        description: data.description,
+        date: data.date,
+        notes: data.notes || null,
+      };
 
-      const { data: tx, error } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: user.id,
-          type: data.type,
-          amount: data.amount,
-          currency_id: data.currency_id,
-          category_id: data.type === 'expense' ? (data.category_id || null) : null,
-          trip_id: data.trip_id || null,
-          description: data.description,
-          date: data.date,
-          notes: data.notes || null,
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-
-      if (selectedTagIds.length > 0) {
-        await supabase.from('transaction_tags').insert(
-          selectedTagIds.map((tagId) => ({ transaction_id: tx.id, subcategory_id: tagId }))
-        );
+      if (initialData) {
+        // Edit mode
+        const { error } = await supabase
+          .from('transactions')
+          .update(payload)
+          .eq('id', initialData.id);
+        if (error) throw error;
+        await supabase.from('transaction_tags').delete().eq('transaction_id', initialData.id);
+        if (selectedTagIds.length > 0) {
+          await supabase.from('transaction_tags').insert(
+            selectedTagIds.map((tagId) => ({ transaction_id: initialData.id, subcategory_id: tagId }))
+          );
+        }
+        toast.success('Transacción actualizada');
+      } else {
+        // Create mode
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { toast.error('No estás autenticado'); return; }
+        const { data: tx, error } = await supabase
+          .from('transactions')
+          .insert({ user_id: user.id, ...payload })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (selectedTagIds.length > 0) {
+          await supabase.from('transaction_tags').insert(
+            selectedTagIds.map((tagId) => ({ transaction_id: tx.id, subcategory_id: tagId }))
+          );
+        }
+        toast.success('Transacción creada');
       }
 
-      toast.success('Transacción creada');
       onSuccess?.();
     } catch {
-      toast.error('Error al crear transacción');
+      toast.error(initialData ? 'Error al actualizar transacción' : 'Error al crear transacción');
     } finally {
       setIsLoading(false);
     }
@@ -396,7 +437,7 @@ function FormInner({ onSuccess, onCancel, defaultTripId }: NewTransactionFormPro
           className="flex-[2] h-12 rounded-[14px] font-semibold text-white dark:text-[#1A1A2E] transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ background: 'var(--card-bg)' }}
         >
-          {isLoading ? 'Creando...' : 'Crear transacción'}
+          {isLoading ? (initialData ? 'Guardando...' : 'Creando...') : (initialData ? 'Guardar cambios' : 'Crear transacción')}
         </button>
       </div>
     </form>

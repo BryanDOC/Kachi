@@ -90,18 +90,10 @@ export function useTrip(tripId: string) {
   };
 }
 
-interface TripTransaction {
-  id: string;
-  type: 'expense' | 'income';
-  amount: number;
-  description: string;
-  date: string;
-  categories?: { id: string; name: string; icon: string | null; color: string | null } | null;
-  currencies?: { code: string; symbol: string } | null;
-}
+import { TransactionWithRelations } from '@/types';
 
 export function useTripTransactions(tripId: string, version?: number) {
-  const [transactions, setTransactions] = useState<TripTransaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -116,13 +108,10 @@ export function useTripTransactions(tripId: string, version?: number) {
         .from('transactions')
         .select(
           `
-          id,
-          type,
-          amount,
-          description,
-          date,
-          categories(id, name, icon, color),
-          currencies(code, symbol)
+          *,
+          categories(*),
+          currencies(*),
+          transaction_tags(subcategories(*))
         `
         )
         .eq('trip_id', tripId)
@@ -131,7 +120,7 @@ export function useTripTransactions(tripId: string, version?: number) {
 
       if (fetchError) throw fetchError;
 
-      setTransactions((data as unknown as TripTransaction[]) || []);
+      setTransactions((data as unknown as TransactionWithRelations[]) || []);
       setError(null);
     } catch (err) {
       setError(err as Error);

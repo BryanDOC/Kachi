@@ -7,6 +7,7 @@ import { tripSchema, type TripFormData } from '@/lib/validations/trip.schema';
 import { useTrips } from '@/lib/hooks/useTrips';
 import { createClient } from '@/lib/supabase/client';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -15,7 +16,7 @@ import { TripCardVertical } from '@/components/trips/TripCardVertical';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Plus, Upload, X, ChevronDown } from 'lucide-react';
+import { Plus, Upload, X, ChevronDown, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -60,6 +61,9 @@ export default function TripsPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [deleteTrip, setDeleteTrip] = useState<Trip | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -90,10 +94,43 @@ export default function TripsPage() {
   });
 
   const openModal = () => {
+    setEditingTrip(null);
     setCoverImage(null);
     setCoverPreview(null);
     reset({ name: '', description: null, start_date: null, end_date: null, status: 'active' });
     setShowModal(true);
+  };
+
+  const openEditModal = (trip: Trip) => {
+    setEditingTrip(trip);
+    setCoverImage(null);
+    setCoverPreview(trip.cover_image || null);
+    reset({
+      name: trip.name,
+      description: trip.description || null,
+      start_date: trip.start_date || null,
+      end_date: trip.end_date || null,
+      status: trip.status,
+    });
+    setShowModal(true);
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!deleteTrip) return;
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('transactions').update({ trip_id: null }).eq('trip_id', deleteTrip.id);
+      const { error } = await supabase.from('trips').delete().eq('id', deleteTrip.id);
+      if (error) throw error;
+      toast.success('Viaje eliminado');
+      setDeleteTrip(null);
+      refetch();
+    } catch {
+      toast.error('Error al eliminar viaje');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,30 +164,40 @@ export default function TripsPage() {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error('No estás autenticado'); return; }
+      const payload = {
+        name: data.name,
+        description: data.description || null,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+        status: data.status,
+      };
 
-      const { data: newTrip, error } = await supabase
-        .from('trips')
-        .insert({
-          user_id: user.id,
-          name: data.name,
-          description: data.description || null,
-          start_date: data.start_date || null,
-          end_date: data.end_date || null,
-          status: data.status,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      if (coverImage && newTrip) {
-        const url = await uploadImage(coverImage, newTrip.id);
-        if (url) await supabase.from('trips').update({ cover_image: url }).eq('id', newTrip.id);
+      if (editingTrip) {
+        const { error } = await supabase.from('trips').update(payload).eq('id', editingTrip.id);
+        if (error) throw error;
+        if (coverImage) {
+          const url = await uploadImage(coverImage, editingTrip.id);
+          if (url) await supabase.from('trips').update({ cover_image: url }).eq('id', editingTrip.id);
+        }
+        toast.success('Viaje actualizado');
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { toast.error('No estás autenticado'); return; }
+        const { data: newTrip, error } = await supabase
+          .from('trips')
+          .insert({ user_id: user.id, ...payload })
+          .select()
+          .single();
+        if (error) throw error;
+        if (coverImage && newTrip) {
+          const url = await uploadImage(coverImage, newTrip.id);
+          if (url) await supabase.from('trips').update({ cover_image: url }).eq('id', newTrip.id);
+        }
+        toast.success('Viaje creado');
       }
 
-      toast.success('Viaje creado');
       setShowModal(false);
+      setEditingTrip(null);
       refetch();
     } catch {
       toast.error('Error al guardar viaje');
@@ -227,6 +274,7 @@ export default function TripsPage() {
             gradient={tripGradient(t, i)}
             coverImage={t.cover_image}
             href={`/dashboard/trips/${t.id}`}
+            onEdit={() => openEditModal(t)}
           />
         ))}
         {sectionTrips.length === 0 && (
@@ -268,8 +316,25 @@ export default function TripsPage() {
         </>
       )}
 
-      {/* Create BottomSheet */}
-      <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)} title="Nuevo viaje">
+      {/* Delete confirm modal */}
+      <Modal isOpen={!!deleteTrip} onClose={() => setDeleteTrip(null)} title="Eliminar viaje" size="sm">
+        <div className="space-y-4">
+          <p className="text-[14px] text-text2">
+            ¿Eliminar <span className="font-semibold text-text1">{deleteTrip?.name}</span>? Las transacciones asociadas se mantendrán pero sin viaje asignado.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteTrip(null)} className="flex-1 h-11 rounded-[12px] bg-bg-input border border-border text-text2 text-[13px] font-medium hover:border-border-focus transition-colors">
+              Cancelar
+            </button>
+            <button onClick={handleDeleteTrip} disabled={isDeleting} className="flex-1 h-11 rounded-[12px] bg-[#FF4444] text-white text-[13px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create / Edit BottomSheet */}
+      <BottomSheet isOpen={showModal} onClose={() => { setShowModal(false); setEditingTrip(null); }} title={editingTrip ? 'Editar viaje' : 'Nuevo viaje'}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Cover image */}
           <div
@@ -338,11 +403,20 @@ export default function TripsPage() {
           </Select>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowModal(false)}>
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => { setShowModal(false); setEditingTrip(null); }}>
               Cancelar
             </Button>
+            {editingTrip && (
+              <button
+                type="button"
+                onClick={() => { setShowModal(false); setDeleteTrip(editingTrip); setEditingTrip(null); }}
+                className="h-11 w-11 flex-shrink-0 rounded-[12px] flex items-center justify-center text-[#FF6B6B] bg-[rgba(255,107,107,0.1)] hover:bg-[rgba(255,107,107,0.18)] transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
             <Button type="submit" variant="primary" className="flex-1" isLoading={isSubmitting || isUploading}>
-              Crear
+              {editingTrip ? 'Guardar' : 'Crear'}
             </Button>
           </div>
         </form>

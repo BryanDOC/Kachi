@@ -11,37 +11,19 @@ const navItems = [
     label: 'Inicio',
     icon: (active: boolean) => (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-        <rect
-          x="3"
-          y="3"
-          width="8"
-          height="8"
-          rx="2"
-          className={active ? 'fill-accent' : 'fill-text3'}
+        <path
+          d="M3 11L12 4l9 7"
+          className={active ? 'stroke-accent' : 'stroke-text3'}
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
-        <rect
-          x="13"
-          y="3"
-          width="8"
-          height="8"
-          rx="2"
-          className={active ? 'fill-accent/35' : 'fill-text3/35'}
-        />
-        <rect
-          x="3"
-          y="13"
-          width="8"
-          height="8"
-          rx="2"
-          className={active ? 'fill-accent/35' : 'fill-text3/35'}
-        />
-        <rect
-          x="13"
-          y="13"
-          width="8"
-          height="8"
-          rx="2"
-          className={active ? 'fill-accent/35' : 'fill-text3/35'}
+        <path
+          d="M5 9.5V19a1 1 0 001 1h4v-4.5a1 1 0 011-1h2a1 1 0 011 1V20h4a1 1 0 001-1V9.5"
+          className={active ? 'stroke-accent' : 'stroke-text3'}
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     ),

@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Trash2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
 
@@ -11,10 +11,11 @@ export interface TransactionRowProps {
   iconName?: string | null;
   amount: string;
   type: 'income' | 'expense';
+  onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export function TransactionRow({ description, date, category, iconName, amount, type, onDelete }: TransactionRowProps) {
+export function TransactionRow({ description, date, category, iconName, amount, type, onEdit, onDelete }: TransactionRowProps) {
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 group">
       <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
@@ -42,6 +43,14 @@ export function TransactionRow({ description, date, category, iconName, amount, 
         <p className={cn('text-[14px] font-semibold tabular-nums', type === 'income' ? 'text-accent' : 'text-[#FF6B6B]')}>
           {type === 'income' ? '+' : '-'} {amount}
         </p>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="opacity-0 group-hover:opacity-100 p-1.5 text-text3 hover:text-accent hover:bg-accent/10 rounded-lg transition-all"
+          >
+            <Pencil size={14} />
+          </button>
+        )}
         {onDelete && (
           <button
             onClick={onDelete}

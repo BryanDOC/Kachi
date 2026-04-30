@@ -5,7 +5,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { NewTransactionForm } from '@/components/transactions/NewTransactionForm';
 
 export function NewTransactionSheet() {
-  const { txSheetOpen, txTripId, closeTxSheet, notifyTxCreated } = useUI();
+  const { txSheetOpen, txTripId, editTx, closeTxSheet, notifyTxCreated } = useUI();
 
   const handleSuccess = () => {
     notifyTxCreated();
@@ -16,12 +16,13 @@ export function NewTransactionSheet() {
     <BottomSheet
       isOpen={txSheetOpen}
       onClose={closeTxSheet}
-      title="Nueva transacción"
+      title={editTx ? 'Editar transacción' : 'Nueva transacción'}
     >
       <NewTransactionForm
         onSuccess={handleSuccess}
         onCancel={closeTxSheet}
         defaultTripId={txTripId}
+        initialData={editTx ?? undefined}
       />
     </BottomSheet>
   );

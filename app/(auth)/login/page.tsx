@@ -243,10 +243,10 @@ export default function LoginPage() {
             className="flex justify-end pt-1 pb-4"
           >
             <Link
-              href="#"
+              href="/forgot-password"
               className="text-[13px] text-accent opacity-85 hover:opacity-100 transition-opacity"
             >
-              Olvidaste tu contrasena?
+              Olvidaste tu contraseña?
             </Link>
           </motion.div>
 

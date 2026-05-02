@@ -33,6 +33,8 @@ export default function DashboardPage() {
     version: txVersion,
   });
 
+  const { transactions: allTransactions } = useTransactions({ version: txVersion });
+
   const currencyCode = allRecent.find((t) => t.currencies?.code)?.currencies?.code ?? 'PEN';
   const fmt = (v: number) => formatCurrency(v, currencyCode);
 
@@ -55,8 +57,8 @@ export default function DashboardPage() {
 
   const balance = useMemo(
     () =>
-      thisMonth.reduce((acc, tx) => (tx.type === 'income' ? acc + tx.amount : acc - tx.amount), 0),
-    [thisMonth]
+      allTransactions.reduce((acc, tx) => (tx.type === 'income' ? acc + tx.amount : acc - tx.amount), 0),
+    [allTransactions]
   );
   const thisMonthExp = useMemo(
     () => thisMonth.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
@@ -78,7 +80,8 @@ export default function DashboardPage() {
   const expDiffPct = lastMonthExp > 0 ? ((thisMonthExp - lastMonthExp) / lastMonthExp) * 100 : null;
   const weekDiffPct = lastWeekExp > 0 ? ((thisWeekExp - lastWeekExp) / lastWeekExp) * 100 : null;
 
-  const period = format(now, 'MMMM yyyy', { locale: es });
+  const monthName = format(now, 'MMMM', { locale: es });
+  const period = `${format(now, 'dd')} de ${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
 
   const recentTransactions: Transaction[] = thisMonth.slice(0, 5).map((tx) => ({
     id: tx.id,

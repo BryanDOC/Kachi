@@ -76,7 +76,7 @@ export function BalanceCard({ balance, period }: BalanceCardProps) {
             Balance disponible
           </p>
           <p className="font-brand text-2xl text-white dark:text-[#1A1A2E] tracking-tight">{balance}</p>
-          <p className="text-[11px] text-white/50 dark:text-[#1A1A2E]/50 mt-1 capitalize">{period}</p>
+          <p className="text-[11px] text-white/50 dark:text-[#1A1A2E]/50 mt-1">{period}</p>
         </div>
 
         {/* Bottom: Register button */}

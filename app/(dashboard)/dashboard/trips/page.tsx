@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Trip } from '@/types';
+import { formatCurrency } from '@/lib/utils/currency';
 
 const CHIPS = ['Todos', 'Activos', 'Completados', 'Cancelados'];
 
@@ -49,7 +50,7 @@ function tripGradient(trip: Trip, index: number): string {
 }
 
 export default function TripsPage() {
-  const { trips, activeTrips, completedTrips, cancelledTrips, isLoading, refetch } = useTrips();
+  const { trips, activeTrips, completedTrips, cancelledTrips, tripTotals, isLoading, refetch } = useTrips();
 
   const [activeChip, setActiveChip] = useState('Todos');
   const [showModal, setShowModal] = useState(false);
@@ -275,7 +276,7 @@ export default function TripsPage() {
             key={t.id}
             name={t.name}
             dates={formatTripDates(t.start_date, t.end_date)}
-            totalSpent="—"
+            totalSpent={tripTotals[t.id] ? formatCurrency(tripTotals[t.id], 'PEN') : '—'}
             status={t.status}
             gradient={tripGradient(t, i)}
             coverImage={t.cover_image}
@@ -312,9 +313,10 @@ export default function TripsPage() {
                 key={t.id}
                 name={t.name}
                 dates={formatTripDates(t.start_date, t.end_date)}
-                total="—"
+                total={tripTotals[t.id] ? formatCurrency(tripTotals[t.id], 'PEN') : '—'}
                 emoji="✈️"
                 gradient={tripGradient(t, i)}
+                coverImage={t.cover_image}
                 href={`/dashboard/trips/${t.id}`}
               />
             ))}

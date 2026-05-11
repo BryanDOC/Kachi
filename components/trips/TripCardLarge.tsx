@@ -68,16 +68,16 @@ export function TripCardLarge({
             </span>
           </div>
           <div>
-            <div className="flex items-center gap-1 text-[12px] text-white/60 mb-1">
+            <p className="font-sans text-[20px] font-semibold text-white mb-1">{name}</p>
+            <div className="flex items-center gap-1 text-[12px] text-white/60 mb-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
                 <path d="M1 5h10" stroke="rgba(255,255,255,0.6)" strokeWidth="1.1" />
               </svg>
               {dates}
             </div>
-            <p className="font-sans text-[20px] font-semibold text-white mb-1.5">{name}</p>
             <div className="flex items-center justify-between">
-              <span className="font-sans text-[14px] font-semibold text-white tabular-nums">{totalSpent} gastado</span>
+              <span className="font-sans text-[14px] font-semibold text-white tabular-nums">{totalSpent}</span>
               <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path

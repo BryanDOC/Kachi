@@ -11,7 +11,14 @@ interface TripCardVerticalProps {
   href: string;
 }
 
+function splitDates(dates: string): [string, string | null] {
+  const idx = dates.search(/\d{4}/);
+  if (idx <= 0) return [dates, null];
+  return [dates.slice(0, idx).replace(/[-—\s]+$/, ''), dates.slice(idx)];
+}
+
 export function TripCardVertical({ name, dates, total, emoji, gradient, coverImage, href }: TripCardVerticalProps) {
+  const [datesTop, datesBottom] = splitDates(dates);
   return (
     <Link
       href={href}
@@ -27,12 +34,15 @@ export function TripCardVertical({ name, dates, total, emoji, gradient, coverIma
           {emoji}
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3.5">
         <p className="font-sans text-[14px] font-semibold text-white leading-tight mb-0.5">
           {name}
         </p>
-        <p className="text-[11px] text-white/55 mb-2">{dates}</p>
+        <p className="text-[11px] text-white/55 mb-2 leading-[1.4]">
+          {datesTop}
+          {datesBottom && <><br />{datesBottom}</>}
+        </p>
         <p className="font-sans text-[12px] font-medium text-white/85 tabular-nums">{total}</p>
       </div>
     </Link>

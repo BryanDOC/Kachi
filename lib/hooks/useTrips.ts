@@ -6,6 +6,7 @@ import { Trip } from '@/types';
 
 export function useTrips() {
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [tripTotals, setTripTotals] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -14,14 +15,20 @@ export function useTrips() {
       setIsLoading(true);
       const supabase = createClient();
 
-      const { data, error: fetchError } = await supabase
-        .from('trips')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [{ data, error: fetchError }, { data: txData }] = await Promise.all([
+        supabase.from('trips').select('*').order('created_at', { ascending: false }),
+        supabase.from('transactions').select('trip_id, amount, type').not('trip_id', 'is', null).eq('type', 'expense'),
+      ]);
 
       if (fetchError) throw fetchError;
 
+      const totals: Record<string, number> = {};
+      for (const tx of txData || []) {
+        if (tx.trip_id) totals[tx.trip_id] = (totals[tx.trip_id] || 0) + tx.amount;
+      }
+
       setTrips(data || []);
+      setTripTotals(totals);
       setError(null);
     } catch (err) {
       setError(err as Error);
@@ -43,6 +50,7 @@ export function useTrips() {
     activeTrips,
     completedTrips,
     cancelledTrips,
+    tripTotals,
     isLoading,
     error,
     refetch: fetchTrips,

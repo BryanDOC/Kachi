@@ -1,6 +1,7 @@
 'use client';
 
 import { useTrips } from '@/lib/hooks/useTrips';
+import { formatCurrency } from '@/lib/utils/currency';
 import { TripCardVertical } from '@/components/trips/TripCardVertical';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,7 +28,7 @@ function formatDates(start: string | null, end: string | null): string {
 }
 
 export default function CompletedTripsPage() {
-  const { completedTrips, isLoading } = useTrips();
+  const { completedTrips, tripTotals, isLoading } = useTrips();
 
   return (
     <div className="max-w-lg mx-auto lg:max-w-none">
@@ -63,7 +64,7 @@ export default function CompletedTripsPage() {
               key={t.id}
               name={t.name}
               dates={formatDates(t.start_date, t.end_date)}
-              total="—"
+              total={tripTotals[t.id] ? formatCurrency(tripTotals[t.id], 'PEN') : '—'}
               emoji="✈️"
               gradient={GRADIENTS[i % GRADIENTS.length]}
               coverImage={t.cover_image}

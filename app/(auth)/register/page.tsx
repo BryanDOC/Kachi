@@ -140,10 +140,10 @@ export default function RegisterPage() {
               />
             </svg>
           </div>
-          <h1 className="font-display text-[32px] font-extrabold text-text1 tracking-tight mb-1.5">
-            Kachi
+          <h1 className="font-brand text-[36px] text-text1 tracking-wide mb-1.5">
+            KACHI
           </h1>
-          <p className="text-sm text-text2 font-light tracking-wide">
+          <p className="text-[13px] text-text2 font-light tracking-wide">
             Tu gestor financiero personal
           </p>
         </motion.div>
@@ -154,8 +154,8 @@ export default function RegisterPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.09 }}
         >
-          <h2 className="font-display text-[22px] font-bold text-text1 mb-1">Crear cuenta</h2>
-          <p className="text-sm text-text2 mb-6">Empieza a gestionar tus finanzas</p>
+          <h2 className="text-[20px] font-bold text-text1 mb-1">Crear cuenta</h2>
+          <p className="text-[13px] text-text2 mb-6">Empieza a gestionar tus finanzas</p>
         </motion.div>
 
         {/* Form */}
@@ -183,7 +183,7 @@ export default function RegisterPage() {
               placeholder="Nombre completo"
               className={cn(
                 'w-full h-[54px] bg-bg-input border border-border rounded-2xl',
-                'text-text1 text-[15px] pl-11 pr-4',
+                'text-text1 text-[13px] pl-11 pr-4',
                 'placeholder:text-text3 outline-none',
                 'transition-all duration-200',
                 'focus:border-border-focus focus:bg-accent/[0.04]',
@@ -192,7 +192,7 @@ export default function RegisterPage() {
               {...register('fullName')}
             />
             {errors.fullName && (
-              <p className="text-sm text-red-400 mt-1">{errors.fullName.message}</p>
+              <p className="text-[12px] text-red-400 mt-1">{errors.fullName.message}</p>
             )}
           </motion.div>
 
@@ -227,7 +227,7 @@ export default function RegisterPage() {
               placeholder="Correo electronico"
               className={cn(
                 'w-full h-[54px] bg-bg-input border border-border rounded-2xl',
-                'text-text1 text-[15px] pl-11 pr-4',
+                'text-text1 text-[13px] pl-11 pr-4',
                 'placeholder:text-text3 outline-none',
                 'transition-all duration-200',
                 'focus:border-border-focus focus:bg-accent/[0.04]',
@@ -235,7 +235,7 @@ export default function RegisterPage() {
               )}
               {...register('email')}
             />
-            {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-[12px] text-red-400 mt-1">{errors.email.message}</p>}
           </motion.div>
 
           {/* Password Input */}
@@ -292,7 +292,7 @@ export default function RegisterPage() {
               </svg>
             </button>
             {errors.password && (
-              <p className="text-sm text-red-400 mt-1">{errors.password.message}</p>
+              <p className="text-[12px] text-red-400 mt-1">{errors.password.message}</p>
             )}
           </motion.div>
 
@@ -327,7 +327,7 @@ export default function RegisterPage() {
               placeholder="Confirmar contrasena"
               className={cn(
                 'w-full h-[54px] bg-bg-input border border-border rounded-2xl',
-                'text-text1 text-[15px] pl-11 pr-4',
+                'text-text1 text-[13px] pl-11 pr-4',
                 'placeholder:text-text3 outline-none',
                 'transition-all duration-200',
                 'focus:border-border-focus focus:bg-accent/[0.04]',
@@ -336,7 +336,7 @@ export default function RegisterPage() {
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-red-400 mt-1">{errors.confirmPassword.message}</p>
+              <p className="text-[12px] text-red-400 mt-1">{errors.confirmPassword.message}</p>
             )}
           </motion.div>
 
@@ -350,10 +350,10 @@ export default function RegisterPage() {
             className={cn(
               'w-full h-[58px] rounded-[20px] border-none',
               'bg-accent text-bg',
-              'font-display text-base font-bold tracking-wide',
-              'cursor-pointer',
+              'font-sans text-[15px] font-semibold tracking-wide',
+              'cursor-pointer shadow-[0_8px_32px_rgba(var(--accent-rgb),0.25)]',
               'transition-all duration-150',
-              'hover:-translate-y-0.5',
+              'hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(var(--accent-rgb),0.35)]',
               'active:scale-[0.98]',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
@@ -400,18 +400,19 @@ export default function RegisterPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.42 }}
-          className="flex gap-3 mb-8"
+          className="mb-8"
         >
           <button
             type="button"
             onClick={handleGoogleSignUp}
             disabled={isGoogleLoading}
             className={cn(
-              'flex-1 h-[54px] rounded-2xl',
+              'w-full h-[54px] rounded-2xl',
               'border border-border bg-bg-input',
-              'flex items-center justify-center',
+              'flex items-center justify-center gap-3',
+              'text-[14px] font-medium text-text1',
               'transition-all duration-150',
-              'hover:border-text3/20 hover:bg-text1/[0.09]',
+              'hover:border-border-focus hover:bg-text1/[0.05]',
               'disabled:opacity-50'
             )}
           >
@@ -433,39 +434,28 @@ export default function RegisterPage() {
                 />
               </svg>
             ) : (
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <path
-                  d="M20.64 11.2c0-.637-.057-1.251-.164-1.84H11v3.481h5.419a4.63 4.63 0 0 1-2.008 3.04v2.524h3.252c1.9-1.75 3-4.33 3-5.744"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M11 21c2.7 0 4.964-.895 6.618-2.423l-3.252-2.524C13.38 16.78 12.29 17.1 11 17.1c-2.61 0-4.82-1.762-5.61-4.13H2.04v2.607A9.997 9.997 0 0 0 11 21"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.39 12.97A6.015 6.015 0 0 1 5.07 11c0-.684.12-1.348.32-1.97V6.423H2.04A9.997 9.997 0 0 0 1 11c0 1.612.386 3.138 1.04 4.577l3.35-2.607Z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M11 4.9c1.47 0 2.791.506 3.83 1.5l2.872-2.872C15.96 1.99 13.697 1 11 1A9.997 9.997 0 0 0 2.04 6.423l3.35 2.607C6.18 6.66 8.39 4.9 11 4.9"
-                  fill="#EA4335"
-                />
-              </svg>
+              <>
+                <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                  <path
+                    d="M20.64 11.2c0-.637-.057-1.251-.164-1.84H11v3.481h5.419a4.63 4.63 0 0 1-2.008 3.04v2.524h3.252c1.9-1.75 3-4.33 3-5.744"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M11 21c2.7 0 4.964-.895 6.618-2.423l-3.252-2.524C13.38 16.78 12.29 17.1 11 17.1c-2.61 0-4.82-1.762-5.61-4.13H2.04v2.607A9.997 9.997 0 0 0 11 21"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.39 12.97A6.015 6.015 0 0 1 5.07 11c0-.684.12-1.348.32-1.97V6.423H2.04A9.997 9.997 0 0 0 1 11c0 1.612.386 3.138 1.04 4.577l3.35-2.607Z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M11 4.9c1.47 0 2.791.506 3.83 1.5l2.872-2.872C15.96 1.99 13.697 1 11 1A9.997 9.997 0 0 0 2.04 6.423l3.35 2.607C6.18 6.66 8.39 4.9 11 4.9"
+                    fill="#EA4335"
+                  />
+                </svg>
+                Continuar con Google
+              </>
             )}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              'flex-1 h-[54px] rounded-2xl',
-              'border border-border bg-bg-input',
-              'flex items-center justify-center',
-              'transition-all duration-150',
-              'hover:border-text3/20 hover:bg-text1/[0.09]'
-            )}
-          >
-            <svg width="20" height="22" viewBox="0 0 814 1000" className="fill-text1">
-              <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.8 0 695.6 0 604.1c0-106.5 56.8-162.7 108.2-163.7 42.2-.9 83.3 29.8 107.3 29.8c23.9 0 71.8-35.4 124.4-35.4 20.3 0 80.4 2.4 118.4 54.7zm-159.8-67.6c3.2-17.6 4.5-34.2 4.5-50.7 0-63.7-26.6-112.8-74.3-150.3C528.6 37.7 479 17 424.4 17c-3 17.4-5.4 34.5-5.4 51.8 0 70.3 27.2 127.3 75 169.5 45.4 40.1 100 65.7 134.3 35.0z" />
-            </svg>
           </button>
         </motion.div>
 
@@ -474,7 +464,7 @@ export default function RegisterPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.47 }}
-          className="text-center text-sm text-text2"
+          className="text-center text-[13px] text-text2"
         >
           Ya tienes cuenta?{' '}
           <Link href="/login" className="text-accent font-medium">

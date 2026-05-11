@@ -66,6 +66,7 @@ export default function CompletedTripsPage() {
               total="—"
               emoji="✈️"
               gradient={GRADIENTS[i % GRADIENTS.length]}
+              coverImage={t.cover_image}
               href={`/dashboard/trips/${t.id}`}
             />
           ))}
